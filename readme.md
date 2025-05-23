@@ -46,3 +46,21 @@ cd $HOME\projects\win-dot\scripts
 
 - Windows 10/11
 - PowerShell (run as Administrator)
+
+
+## Powershell Dotfiles setup
+
+```powershell
+git clone --bare git@github.com:eduuh/win-dot.git $HOME/projects/win-dot-bare
+
+function dot {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Args
+    )
+    git --git-dir="$HOME/projects/win-dot-bare" --work-tree="$HOME" @Args
+}
+
+
+dot config status.showUntrackedFiles no
+```
