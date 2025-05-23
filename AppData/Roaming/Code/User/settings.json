@@ -1,0 +1,79 @@
+{
+  "files.autoSave": "afterDelay",
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.minimap.autohide": true,
+  "editor.minimap.enabled": false,
+  "editor.fontFamily": "Cascadia Mono",
+  "remote.autoReopenInRemote": false,
+  "editor.codeLensFontFamily": "Cascadia Code",
+  "terminal.integrated.fontLigatures.enabled": true,
+  "vim.useCtrlKeys": false,
+  "chat.agent.enabled": true,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "mcp": {
+    "servers": {
+      "fluent-pilot": {
+        "type": "sse",
+        "url": "https://chat.fluentui.dev/sse"
+      },
+      "playwright": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@playwright/mcp@latest"
+        ]
+      },
+      "context7": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@upstash/context7-mcp@latest"
+        ]
+      }
+    }
+  },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "github.copilot.selectedCompletionModel": "",
+  "git.enableSmartCommit": true,
+  "editor.autoClosingBrackets": "never",
+  "editor.suggestOnTriggerCharacters": false,
+  "cSpell.userWords": [
+    "EDUUH",
+    "LALT",
+    "LCTRL",
+    "LSHF",
+    "NUMPAD",
+    "RALT",
+    "RCTRL",
+    "RSHF"
+  ],
+  "javascript.suggest.includeAutomaticOptionalChainCompletions": false,
+  "javascript.suggest.includeCompletionsForImportStatements": false,
+  "typescript.suggest.includeAutomaticOptionalChainCompletions": false,
+  "typescript.suggest.includeCompletionsForImportStatements": false,
+  "javascript.suggest.classMemberSnippets.enabled": false,
+  "css.completion.triggerPropertyValueCompletion": false,
+  "css.completion.completePropertyWithSemicolon": false,
+  "accessibility.verbosity.inlineCompletions": false,
+  "less.completion.completePropertyWithSemicolon": false,
+  "less.completion.triggerPropertyValueCompletion": false,
+  "scss.completion.completePropertyWithSemicolon": false,
+  "scss.completion.triggerPropertyValueCompletion": false,
+  "editor.autoClosingQuotes": "never",
+  "editor.autoSurround": "never",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "workbench.sideBar.location": "right",
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
