@@ -1,19 +1,42 @@
 {
-  "files.autoSave": "afterDelay",
+  "files.autoSave": "onWindowChange",
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "editor.minimap.autohide": true,
   "editor.minimap.enabled": false,
   "editor.fontFamily": "Cascadia Mono",
-  "remote.autoReopenInRemote": false,
   "editor.codeLensFontFamily": "Cascadia Code",
   "terminal.integrated.fontLigatures.enabled": true,
   "vim.useCtrlKeys": false,
   "chat.agent.enabled": true,
+  "editor.hideCursorInOverviewRuler": true,
+  "editor.overviewRulerBorder": false,
+  "editor.scrollbar.horizontal": "hidden",
+  "editor.scrollbar.vertical": "hidden",
+  "security.workspace.trust.untrustedFiles": "open",
+  "breadcrumbs.enabled": false,
+  "color-highlight.markRuler": false,
+  "explorer.openEditors.visible": 0,
+  "explorer.decorations.colors": false,
+  "editor.bracketPairColorization.enabled": false,
+  "editor.guides.highlightActiveBracketPair": false,
+  "editor.guides.bracketPairsHorizontal": false,
+  "editor.guides.indentation": false,
+  "editor.cursorBlinking": "phase",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.renderLineHighlight": "none",
+  "editor.glyphMargin": false,
+  "editor.lineNumbers": "off",
+  "editor.showFoldingControls": "never",
+  "window.menuBarVisibility": "toggle",
+  "workbench.layoutControl.type": "menu",
+  "workbench.layoutControl.enabled": false,
+  "editor.emptySelectionClipboard": false,
+  "editor.snippetSuggestions": "bottom",
+  "window.title": " ",
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -25,17 +48,11 @@
       },
       "playwright": {
         "command": "npx",
-        "args": [
-          "-y",
-          "@playwright/mcp@latest"
-        ]
+        "args": ["-y", "@playwright/mcp@latest"]
       },
       "context7": {
         "command": "npx",
-        "args": [
-          "-y",
-          "@upstash/context7-mcp@latest"
-        ]
+        "args": ["-y", "@upstash/context7-mcp@latest"]
       }
     }
   },
@@ -75,5 +92,12 @@
   },
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "workbench.activityBar.location": "hidden",
+  "workbench.statusBar.visible": false,
+  "workbench.tree.renderIndentGuides": "none",
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "window.customTitleBarVisibility": "never"
 }
