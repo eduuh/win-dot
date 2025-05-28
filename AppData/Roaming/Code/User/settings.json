@@ -1,5 +1,5 @@
 {
-  "files.autoSave": "onWindowChange",
+  "files.autoSave": "afterDelay",
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -93,7 +93,6 @@
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "workbench.activityBar.location": "hidden",
   "workbench.statusBar.visible": false,
   "workbench.tree.renderIndentGuides": "none",
   "[jsonc]": {
