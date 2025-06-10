@@ -75,5 +75,34 @@
     "key": "ctrl+f",
     "command": "-settings.action.search",
     "when": "inSettingsEditor"
+  },
+  {
+    "key": "ctrl+a",
+    "command": "-list.selectAll",
+    "when": "listFocus && listSupportsMultiselect && !inputFocus && !treestickyScrollFocused"
+  },
+  {
+    "key": "ctrl+a",
+    "command": "-extension.vim_ctrl+a",
+    "when": "editorTextFocus && vim.active && vim.use<C-a> && !inDebugRepl"
+  },
+  {
+    "key": "ctrl+a",
+    "command": "-editor.action.selectAll"
+  },
+  {
+    "key": "ctrl+a",
+    "command": "-notebook.cell.output.selectAll",
+    "when": "notebookEditorFocused && notebookOutputFocused"
+  },
+  {
+    "key": "ctrl+a",
+    "command": "workbench.panel.chat",
+    "when": "workbench.panel.chat.view.copilot.active"
+  },
+  {
+    "key": "ctrl+alt+i",
+    "command": "-workbench.panel.chat",
+    "when": "workbench.panel.chat.view.copilot.active"
   }
 ]

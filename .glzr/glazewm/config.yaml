@@ -21,7 +21,7 @@ gaps:
   outer_gap:
     top: "10px"
     right: "20px"
-    bottom: "40px"
+    bottom: "20px"
     left: "20px"
 
 window_effects:
@@ -77,10 +77,6 @@ workspaces:
     keep_alive: true
   - name: "4"
     keep_alive: true
-  - name: "5"
-    keep_alive: true
-  - name: "6"
-  - name: "7"
 
 window_rules:
   - commands: ["ignore"]
@@ -88,37 +84,19 @@ window_rules:
       - window_process: { equals: "Calendar" }
       - window_process: { equals: "People" }
       - window_process: { equals: "Files" }
-      
-      - window_title: { regex: "[Pp]icture.in.[Pp]icture" }
-        window_class: { regex: "Chrome_WidgetWin_1|MozillaDialogClass" }
-
-      - window_process: { regex: "PowerToys" }
-
-        window_title: { regex: ".*? - Peek" }
-      - window_process: { equals: "Lively" }
-        window_class: { regex: "HwndWrapper" }
 
 binding_modes:
 keybindings:
-
   - commands: ['focus --direction left']
     bindings: ['alt+a' ]
   - commands: ['focus --direction right']
     bindings: ['alt+t']
-
   - commands: ["toggle-fullscreen"]
     bindings: ["alt+f"]
-
   - commands: ["toggle-minimized"]
     bindings: ["alt+m"]
-
   - commands: ["close"]
     bindings: ["alt+q"]
-
-  # Redraw all windows.
-  - commands: ["wm-redraw"]
-    bindings: ["alt+r"]
-
 
   - commands: ['wm-toggle-pause']
     bindings: ['alt+d']
@@ -138,10 +116,6 @@ keybindings:
     bindings: ["alt+i"]
   - commands: ["focus --workspace 4", "focus --workspace 4"]
     bindings: ["alt+l"]
-  - commands: ["focus --workspace 5", "focus --workspace 5"]
-    bindings: ["alt+u"]
-  - commands: ["focus --workspace 6", "focus --workspace 6"]
-    bindings: ["alt+y"]
 
   - commands: ["move --workspace 1", "focus --workspace 1"]
     bindings: ["alt+shift+n"]
@@ -151,7 +125,3 @@ keybindings:
     bindings: ["alt+shift+i"]
   - commands: ["move --workspace 4", "focus --workspace 4"]
     bindings: ["alt+shift+l"]
-  - commands: ["move --workspace 5", "focus --workspace 5"]
-    bindings: ["alt+shift+u"]
-  - commands: ["move --workspace 6", "focus --workspace 6"]
-    bindings: ["alt+shift+y"]
