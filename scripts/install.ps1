@@ -20,8 +20,9 @@ Write-Host "Updating Scoop and installing packages..."
 scoop update
 scoop bucket add extras
 scoop update extras
+scoop bucket add versions
 
-$scoopPackages = @("git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake")
+$scoopPackages = @("git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "versions/vscode-insiders")
 foreach ($tool in $scoopPackages) {
     scoop install $tool
     Write-Host "Installed $tool."
@@ -30,6 +31,7 @@ foreach ($tool in $scoopPackages) {
 # Winget Packages
 Write-Host "Installing Winget packages..."
 $wingetPackages = @(
+    "Microsoft.PowerToys",
     "Microsoft.PowerShell.Preview",
     "Microsoft.DotNet.SDK.9",
     "Microsoft.DotNet.DesktopRuntime.9",
@@ -37,6 +39,8 @@ $wingetPackages = @(
     "Microsoft.DotNet.DesktopRuntime.6",
     "Microsoft.DotNet.AspNetCore.6",
     "DEVCOM.JetBrainsMonoNerdFont"
+    "Zebar"
+    "GlazeWM"
 )
 foreach ($pkg in $wingetPackages) {
     winget install --id $pkg --source winget --accept-source-agreements --accept-package-agreements
@@ -98,5 +102,21 @@ Write-Host "Extracting to $releasePath..."
 Expand-Archive -Path $zipPath -DestinationPath $releasePath -Force
 Remove-Item $zipPath -Force
 Write-Host "Capsicain $version installed to $releasePath"
+
+# Set Capsicain to run at Windows startup
+Write-Host "Setting up Capsicain to run at Windows startup..."
+$RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+$AppName = "Capsicain"
+$AppPath = Join-Path $releasePath "capsicain.exe"
+
+# Ensure the exe exists
+if (Test-Path $AppPath) {
+    # Set the registry key to run Capsicain at startup
+    Set-ItemProperty -Path $RegPath -Name $AppName -Value "`"$AppPath`""
+    Write-Host "✅ Capsicain has been set to run at Windows startup"
+} else {
+    Write-Host "❌ Warning: Could not find capsicain.exe at $AppPath"
+    Write-Host "   Please set up startup manually after installation"
+}
 
 Write-Host "✅ Setup complete. Restart your terminal."
