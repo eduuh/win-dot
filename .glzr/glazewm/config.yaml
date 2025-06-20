@@ -1,6 +1,10 @@
 general:
   config_reload_commands: []
 
+  startup_commands: ['shell-exec zebar']
+
+  shutdown_commands: ['shell-exec taskkill /IM zebar.exe /F']
+
   focus_follows_cursor: true
 
   toggle_workspace_on_refocus: false
@@ -19,7 +23,7 @@ gaps:
   inner_gap: "10px"
 
   outer_gap:
-    top: "10px"
+    top: "60px"
     right: "20px"
     bottom: "20px"
     left: "20px"
@@ -31,7 +35,7 @@ window_effects:
       color: "#8dbcff"
 
     hide_title_bar:
-      enabled: true
+      enabled: false
 
     corner_style:
       enabled: true
@@ -59,9 +63,9 @@ window_behavior:
 
   state_defaults:
     floating:
-      centered: false
+      centered: true
 
-      shown_on_top: false
+      shown_on_top: true
 
     fullscreen:
       maximized: false
@@ -70,20 +74,31 @@ window_behavior:
 
 workspaces:
   - name: "1"
-    keep_alive: true
   - name: "2"
-    keep_alive: true
   - name: "3"
-    keep_alive: true
   - name: "4"
-    keep_alive: true
 
 window_rules:
   - commands: ["ignore"]
     match:
+      - window_process: { equals: 'zebar' }
       - window_process: { equals: "Calendar" }
       - window_process: { equals: "People" }
       - window_process: { equals: "Files" }
+      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+        window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
+      - window_process: { equals: 'PowerToys' }
+        window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
+      - window_process: { equals: 'PowerToys' }
+        window_title: { regex: '.*? - Peek' }
+      - window_process: { equals: 'Lively' }
+        window_class: { regex: 'HwndWrapper' }
+      - window_process: { equals: 'EXCEL' }
+        window_class: { not_regex: 'XLMAIN' }
+      - window_process: { equals: 'WINWORD' }
+        window_class: { not_regex: 'OpusApp' }
+      - window_process: { equals: 'POWERPNT' }
+        window_class: { not_regex: 'PPTFrameClass' }
 
 binding_modes:
 keybindings:
@@ -101,11 +116,6 @@ keybindings:
   - commands: ['wm-toggle-pause']
     bindings: ['alt+d']
 
-  # Launch CMD terminal. Alternatively, use `shell-exec wt` or
-  # `shell-exec %ProgramFiles%/Git/git-bash.exe` to start Windows
-  # Terminal and Git Bash respectively.
-  # - commands: ["shell-exec  C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"]
-    # bindings: ["alt+enter"]
 
   # Change focus to a workspace defined in `workspaces` config.
   - commands: ["focus --workspace 1", "focus --workspace 1"]
@@ -125,3 +135,15 @@ keybindings:
     bindings: ["alt+shift+i"]
   - commands: ["move --workspace 4", "focus --workspace 4"]
     bindings: ["alt+shift+l"]
+
+  # Move the focused window's parent workspace to a monitor in a given
+  # direction.
+  - commands: ['move-workspace --direction left']
+    bindings: ['alt+shift+a']
+  - commands: ['move-workspace --direction right']
+    bindings: ['alt+shift+f']
+  - commands: ['move-workspace --direction up']
+    bindings: ['alt+shift+d']
+  - commands: ['move-workspace --direction down']
+    bindings: ['alt+shift+s']
+ 
