@@ -23,7 +23,7 @@ gaps:
   inner_gap: "10px"
 
   outer_gap:
-    top: "60px"
+    top: "50px"
     right: "20px"
     bottom: "20px"
     left: "20px"
@@ -74,9 +74,15 @@ window_behavior:
 
 workspaces:
   - name: "1"
+    display_name: "remote"
+    bind_to_monitor: 0
+    keep_alive: true
   - name: "2"
+    keep_alive: true
   - name: "3"
+    keep_alive: true
   - name: "4"
+    keep_alive: true
 
 window_rules:
   - commands: ["ignore"]
@@ -85,20 +91,20 @@ window_rules:
       - window_process: { equals: "Calendar" }
       - window_process: { equals: "People" }
       - window_process: { equals: "Files" }
-      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
-        window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
-      - window_process: { equals: 'PowerToys' }
-        window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
-      - window_process: { equals: 'PowerToys' }
-        window_title: { regex: '.*? - Peek' }
-      - window_process: { equals: 'Lively' }
-        window_class: { regex: 'HwndWrapper' }
-      - window_process: { equals: 'EXCEL' }
-        window_class: { not_regex: 'XLMAIN' }
-      - window_process: { equals: 'WINWORD' }
-        window_class: { not_regex: 'OpusApp' }
-      - window_process: { equals: 'POWERPNT' }
-        window_class: { not_regex: 'PPTFrameClass' }
+      # - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+      #   window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
+      # - window_process: { equals: 'PowerToys' }
+      #   window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
+      # - window_process: { equals: 'PowerToys' }
+      #   window_title: { regex: '.*? - Peek' }
+      # - window_process: { equals: 'Lively' }
+      #   window_class: { regex: 'HwndWrapper' }
+      # - window_process: { equals: 'EXCEL' }
+      #   window_class: { not_regex: 'XLMAIN' }
+      # - window_process: { equals: 'WINWORD' }
+      #   window_class: { not_regex: 'OpusApp' }
+      # - window_process: { equals: 'POWERPNT' }
+      #   window_class: { not_regex: 'PPTFrameClass' }
 
 binding_modes:
 keybindings:
@@ -136,14 +142,14 @@ keybindings:
   - commands: ["move --workspace 4", "focus --workspace 4"]
     bindings: ["alt+shift+l"]
 
-  # Move the focused window's parent workspace to a monitor in a given
-  # direction.
-  - commands: ['move-workspace --direction left']
-    bindings: ['alt+shift+a']
-  - commands: ['move-workspace --direction right']
-    bindings: ['alt+shift+f']
-  - commands: ['move-workspace --direction up']
-    bindings: ['alt+shift+d']
-  - commands: ['move-workspace --direction down']
-    bindings: ['alt+shift+s']
+  # # Move the focused window's parent workspace to a monitor in a given
+  # # direction.
+  # - commands: ['move-workspace --direction left']
+  #   bindings: ['alt+shift+a']
+  # - commands: ['move-workspace --direction right']
+  #   bindings: ['alt+shift+f']
+  # - commands: ['move-workspace --direction up']
+  #   bindings: ['alt+shift+d']
+  # - commands: ['move-workspace --direction down']
+  #   bindings: ['alt+shift+s']
  

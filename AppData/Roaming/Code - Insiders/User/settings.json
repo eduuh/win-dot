@@ -1,0 +1,107 @@
+{
+  "files.autoSave": "afterDelay",
+  "editor.inlineSuggest.enabled": false,
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "editor.acceptSuggestionOnEnter": "off",
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.minimap.enabled": false,
+  "editor.fontFamily": "Cascadia Mono",
+  "editor.codeLensFontFamily": "Cascadia Code",
+  "terminal.integrated.fontLigatures.enabled": true,
+  "vim.useCtrlKeys": false,
+  "chat.agent.enabled": true,
+  "editor.hideCursorInOverviewRuler": true,
+  "editor.overviewRulerBorder": false,
+  "editor.scrollbar.horizontal": "hidden",
+  "editor.scrollbar.vertical": "hidden",
+  "security.workspace.trust.untrustedFiles": "open",
+  "breadcrumbs.enabled": false,
+  "color-highlight.markRuler": false,
+  "explorer.openEditors.visible": 0,
+  "explorer.decorations.colors": false,
+  "editor.bracketPairColorization.enabled": false,
+  "editor.guides.highlightActiveBracketPair": false,
+  "editor.guides.bracketPairsHorizontal": false,
+  "editor.guides.indentation": false,
+  "editor.cursorBlinking": "phase",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.renderLineHighlight": "none",
+  "editor.glyphMargin": false,
+  "editor.lineNumbers": "off",
+  "editor.showFoldingControls": "never",
+  "window.menuBarVisibility": "toggle",
+  "workbench.layoutControl.type": "menu",
+  "workbench.layoutControl.enabled": false,
+  "editor.emptySelectionClipboard": false,
+  "editor.snippetSuggestions": "bottom",
+  "window.title": " ",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "mcp": {
+    "servers": {
+      "fluent-pilot": {
+        "type": "sse",
+        "url": "https://chat.fluentui.dev/sse"
+      },
+      "playwright": {
+        "command": "npx",
+        "args": ["-y", "@playwright/mcp@latest"]
+      },
+      "context7": {
+        "command": "npx",
+        "args": ["-y", "@upstash/context7-mcp@latest"]
+      }
+    }
+  },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "github.copilot.selectedCompletionModel": "",
+  "git.enableSmartCommit": true,
+  "editor.autoClosingBrackets": "never",
+  "editor.suggestOnTriggerCharacters": false,
+  "cSpell.userWords": [
+    "EDUUH",
+    "LALT",
+    "LCTRL",
+    "LSHF",
+    "NUMPAD",
+    "RALT",
+    "RCTRL",
+    "RSHF"
+  ],
+  "javascript.suggest.includeAutomaticOptionalChainCompletions": false,
+  "javascript.suggest.includeCompletionsForImportStatements": false,
+  "typescript.suggest.includeAutomaticOptionalChainCompletions": false,
+  "typescript.suggest.includeCompletionsForImportStatements": false,
+  "javascript.suggest.classMemberSnippets.enabled": false,
+  "css.completion.triggerPropertyValueCompletion": false,
+  "css.completion.completePropertyWithSemicolon": false,
+  "accessibility.verbosity.inlineCompletions": false,
+  "less.completion.completePropertyWithSemicolon": false,
+  "less.completion.triggerPropertyValueCompletion": false,
+  "scss.completion.completePropertyWithSemicolon": false,
+  "scss.completion.triggerPropertyValueCompletion": false,
+  "editor.autoClosingQuotes": "never",
+  "editor.autoSurround": "never",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "workbench.sideBar.location": "right",
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "workbench.statusBar.visible": false,
+  "workbench.tree.renderIndentGuides": "none",
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "window.customTitleBarVisibility": "never",
+  "chat.agent.maxRequests": 2000,
+  "workbench.colorTheme": "Kimbie Dark"
+}
