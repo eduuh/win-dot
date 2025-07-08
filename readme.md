@@ -6,11 +6,18 @@ A collection of PowerShell scripts for Windows development environment setup and
 
 ### Run Script (Recommended)
 
-The main runner script that executes both GitHub SSH setup and Windows configuration with administrator privileges:
+The main runner script that executes GitHub SSH setup, Windows configuration, and installs development tools with administrator privileges:
 
 ```powershell
 cd $HOME\projects\win-dot\scripts
 ./run.ps1
+```
+
+To also install the Capsicain keyboard customization:
+
+```powershell
+cd $HOME\projects\win-dot\scripts
+./run.ps1 -InstallKeyboard
 ```
 
 ### Individual Scripts
@@ -35,11 +42,18 @@ cd $HOME\projects\win-dot\scripts
 
 #### Development Tool Installation
 
-Install common development tools using Scoop:
+Install common development tools using Scoop and Winget:
 
 ```powershell
 cd $HOME\projects\win-dot\scripts
 ./install.ps1
+```
+
+To include Capsicain keyboard customization:
+
+```powershell
+cd $HOME\projects\win-dot\scripts
+./install.ps1 -InstallKeyboard
 ```
 
 ## Requirements
