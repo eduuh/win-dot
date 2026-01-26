@@ -21,7 +21,7 @@ scoop bucket add extras
 scoop bucket add main
 scoop bucket add versions
 
-$scoopPackages = @("extras/obsidian","main/neovim","git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat")
+$scoopPackages = @("extras/obsidian","main/neovim","git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship")
 foreach ($tool in $scoopPackages) {
     scoop install $tool
     Write-Host "Installed $tool."
@@ -48,5 +48,20 @@ foreach ($pkg in $wingetPackages) {
 }
 
 winget install GlazeWM --source winget --accept-source-agreements --accept-package-agreements
+
+# Azure Authentication CLI
+Write-Host "Installing Azure Authentication CLI..."
+$env:AZUREAUTH_VERSION = '0.9.2'
+$script = "${env:TEMP}\install.ps1"
+$url = "https://raw.githubusercontent.com/AzureAD/microsoft-authentication-cli/${env:AZUREAUTH_VERSION}/install/install.ps1"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest $url -OutFile $script
+if ($?) {
+    & $script
+    Write-Host "Installed Azure Authentication CLI."
+}
+if ($?) {
+    Remove-Item $script
+}
 
 Write-Host "✅ Package installation complete."

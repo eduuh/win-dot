@@ -1,65 +1,144 @@
-# Win-dot scripts
+# Win-dot
 
-A collection of PowerShell scripts for Windows development environment setup and configuration.
+Automated Windows development environment setup and dotfiles management using PowerShell scripts.
 
-## Available Scripts
+## Quick Start
 
-### Run Script (Recommended)
-
-The main runner script that executes GitHub SSH setup, Windows configuration, and installs development tools with administrator privileges:
+Run the complete setup (requires Administrator privileges):
 
 ```powershell
 cd $HOME\projects\win-dot\scripts
 ./run.ps1
 ```
 
-To also install the Capsicain keyboard customization:
+With optional Capsicain keyboard customization:
 
 ```powershell
-cd $HOME\projects\win-dot\scripts
 ./run.ps1 -InstallKeyboard
 ```
 
-### Individual Scripts
+## What Gets Installed
 
-#### GitHub SSH Setup
+### Package Managers
+- **Scoop** - Command-line installer for Windows
+- **Winget** - Windows Package Manager
 
-Set up SSH keys for GitHub:
+### Development Tools (via Scoop)
+- Git
+- GitHub CLI (gh)
+- Node.js LTS
+- Neovim
+- 7zip
+- fzf (fuzzy finder)
+- ripgrep (fast search)
+- make & cmake
+- bat (cat alternative)
+- **Starship** (cross-shell prompt)
 
+### Applications (via Winget)
+- GlazeWM (tiling window manager)
+- Zebar (status bar)
+- Microsoft PowerToys
+- PowerShell Preview
+- .NET SDK 9 & Desktop Runtime
+- .NET 6 Runtime & ASP.NET Core
+- JetBrains Mono Nerd Font
+- Obsidian (notes)
+
+### Authentication & Cloud
+- **Azure Authentication CLI** (version 0.9.2)
+- GitHub SSH key setup with ED25519 encryption
+
+### Windows Features
+- Developer Mode enabled
+- WSL 2 (Windows Subsystem for Linux)
+- Virtual Machine Platform
+- OpenSSH client and server
+
+### Optional
+- **Capsicain** keyboard customization (with `-InstallKeyboard` flag)
+
+## Available Scripts
+
+### `run.ps1` (Recommended)
+
+Main orchestration script that runs the complete setup:
+1. Windows development configuration (`win.ps1`)
+2. GitHub SSH setup (`gh.ps1`)
+3. Package installation (`install.ps1`)
+4. Optional keyboard setup
+
+**Usage:**
 ```powershell
 cd $HOME\projects\win-dot\scripts
+./run.ps1                    # Standard setup
+./run.ps1 -InstallKeyboard   # Include Capsicain keyboard
+```
+
+### `gh.ps1`
+
+Configures GitHub authentication with SSH keys:
+- Installs OpenSSH
+- Generates ED25519 SSH key
+- Authenticates with GitHub CLI
+- Uploads public key to GitHub
+
+**Usage:**
+```powershell
 ./gh.ps1
 ```
 
-#### Windows Development Configuration
+### `win.ps1`
 
-Configure Windows for development (enables Developer Mode, WSL, etc.):
+Configures Windows for development:
+- Enables Developer Mode
+- Installs and configures WSL 2
+- Enables Virtual Machine Platform
 
+**Usage:**
 ```powershell
-cd $HOME\projects\win-dot\scripts
 ./win.ps1
 ```
 
-#### Development Tool Installation
+### `install.ps1`
 
-Install common development tools using Scoop and Winget:
+Orchestrates package installation:
+- Calls `install-packages.ps1`
+- Optionally calls `install-keyboard.ps1`
 
+**Usage:**
 ```powershell
-cd $HOME\projects\win-dot\scripts
-./install.ps1
+./install.ps1                    # Standard installation
+./install.ps1 -InstallKeyboard   # Include keyboard setup
 ```
 
-To include Capsicain keyboard customization:
+### `install-packages.ps1`
 
+Installs all development tools and applications via Scoop and Winget.
+
+**Usage:**
 ```powershell
-cd $HOME\projects\win-dot\scripts
-./install.ps1 -InstallKeyboard
+./install-packages.ps1
+```
+
+### `install-keyboard.ps1`
+
+Clones and sets up Capsicain keyboard customization:
+- Clones repo to `~/projects/keyboard/repo`
+- Downloads latest release from GitHub
+- Updates if already installed
+
+**Usage:**
+```powershell
+./install-keyboard.ps1
 ```
 
 ## Requirements
 
 - Windows 10/11
-- PowerShell (run as Administrator)
+- PowerShell 5.1 or later
+- Administrator privileges (for most scripts)
+- Internet connection
 
 
 ## Powershell Dotfiles setup
