@@ -7,7 +7,16 @@ function Write-Status($msg, $color = "Cyan") {
 
 $GitHubUser = "eduuh"
 $ConfigRepo = "nvim"
-$NvimConfigPath = Join-Path $env:LOCALAPPDATA "nvim"
+
+# Neovim on Windows looks for config in different locations:
+# - Native Windows: %LOCALAPPDATA%\nvim
+# - Git Bash/WSL: ~/.config/nvim
+# Check which location nvim expects
+$XdgConfigPath = Join-Path $env:USERPROFILE ".config\nvim"
+$WindowsConfigPath = Join-Path $env:LOCALAPPDATA "nvim"
+
+# Use .config/nvim for Git Bash compatibility (default for Scoop install)
+$NvimConfigPath = $XdgConfigPath
 
 Write-Status "Setting up Neovim configuration..."
 
