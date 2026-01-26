@@ -3,31 +3,64 @@
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
+function Write-Status($msg, $color = "Cyan") {
+    Write-Host "==> $msg" -ForegroundColor $color
+}
+
+# Check if git is installed
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Host "Error: Git is not installed. Please install git first." -ForegroundColor Red
+    exit 1
+}
+
 # Use ~/projects/keyboard folder
 $homeDir = [Environment]::GetFolderPath('UserProfile')
 $keyboardDir = Join-Path $homeDir "projects\keyboard"
 
-Write-Host "Setting up Capsicain in $keyboardDir..."
+Write-Status "Setting up Capsicain in $keyboardDir..."
 
-if (-not (Test-Path $keyboardDir)) {
-    New-Item -ItemType Directory -Path $keyboardDir -Force | Out-Null
-    Write-Host "Created $keyboardDir"
+try {
+    if (-not (Test-Path $keyboardDir)) {
+        New-Item -ItemType Directory -Path $keyboardDir -Force | Out-Null
+        Write-Status "Created $keyboardDir" "Green"
+    }
+}
+catch {
+    Write-Host "Error creating directory: $_" -ForegroundColor Red
+    exit 1
 }
 
 # Clone Capsicain repository first
 $repoUrl = "https://github.com/eduuh/capsicain.git"
 $repoPath = Join-Path $keyboardDir "repo"
 
-if (-not (Test-Path $repoPath)) {
-    Write-Host "Cloning Capsicain repository..."
-    git clone $repoUrl $repoPath
-    Write-Host "Repository cloned to $repoPath"
+try {
+    if (-not (Test-Path $repoPath)) {
+        Write-Status "Cloning Capsicain repository..."
+        git clone $repoUrl $repoPath 2>&1 | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            throw "Git clone failed with exit code $LASTEXITCODE"
+        }
+        Write-Status "Repository cloned to $repoPath" "Green"
+    }
+    else {
+        Write-Status "Repository already exists, updating..."
+        Push-Location $repoPath
+        try {
+            git pull 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+                throw "Git pull failed with exit code $LASTEXITCODE"
+            }
+            Write-Status "Repository updated" "Green"
+        }
+        finally {
+            Pop-Location
+        }
+    }
 }
-else {
-    Write-Host "Repository already exists, updating..."
-    Push-Location $repoPath
-    git pull
-    Pop-Location
+catch {
+    Write-Host "Error with git operation: $_" -ForegroundColor Red
+    Write-Host "Continuing with existing files if available..." -ForegroundColor Yellow
 }
 
 # Also download and extract the latest release
