@@ -8,7 +8,8 @@ $GitHubUser = "eduuh"
 # Add your repositories here
 $Repositories = @(
     "win-dot",
-    "personal-notes"
+    "personal-notes",
+    "capsicain"
 )
 
 function Write-Status($msg, $color = "Cyan") {
