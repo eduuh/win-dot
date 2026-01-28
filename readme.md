@@ -1,159 +1,145 @@
 # Win-dot
 
-Automated Windows development environment setup and dotfiles management using PowerShell scripts.
+Automated Windows development environment setup and dotfiles management.
 
-## Quick Start
+## First Time Setup
 
-Run the complete setup (requires Administrator privileges):
+### 1. Clone the Dotfiles Repository
 
 ```powershell
-cd $HOME\projects\win-dot\scripts
+# Clone as a bare repository
+git clone --bare git@github.com:eduuh/win-dot.git $HOME/projects/win-dot-bare
+```
+
+### 2. Set Up the `dot` Command
+
+The `dot` command manages your dotfiles. It's automatically available after you reload PowerShell (the profile is already in the repo).
+
+To use it immediately in your current session:
+
+```powershell
+. $PROFILE
+```
+
+Now you can use `dot` like `git`:
+
+```powershell
+# Hide untracked files in status
+dot config status.showUntrackedFiles no
+
+# Check out your dotfiles
+dot checkout
+```
+
+**Note:** If `dot checkout` fails due to existing files, back them up and try again:
+
+```powershell
+mkdir ~\dotfiles-backup
+# Move conflicting files to backup folder, then retry checkout
+```
+
+### 3. Run the Setup Script
+
+```powershell
+cd $HOME\scripts
 ./run.ps1
 ```
 
-With optional Capsicain keyboard customization:
+Or with keyboard customization:
 
 ```powershell
 ./run.ps1 -InstallKeyboard
 ```
 
+That's it! Your development environment is now configured.
+
+---
+
 ## What Gets Installed
 
-### Package Managers
-- **Scoop** - Command-line installer for Windows
-- **Winget** - Windows Package Manager
+### Core Tools
+- **Scoop** & **Winget** - Package managers
+- **Git** & **GitHub CLI** - Version control
+- **Node.js LTS** - JavaScript runtime
+- **Neovim** - Text editor
+- **Starship** - Shell prompt
 
-### Development Tools (via Scoop)
-- Git
-- GitHub CLI (gh)
-- Node.js LTS
-- Neovim
-- 7zip
-- fzf (fuzzy finder)
-- ripgrep (fast search)
-- make & cmake
-- bat (cat alternative)
-- **Starship** (cross-shell prompt)
+### Development Utilities
+- fzf, ripgrep, bat, 7zip, make, cmake
 
-### Applications (via Winget)
-- GlazeWM (tiling window manager)
-- Zebar (status bar)
-- Microsoft PowerToys
-- PowerShell Preview
-- .NET SDK 9 & Desktop Runtime
-- .NET 6 Runtime & ASP.NET Core
-- JetBrains Mono Nerd Font
-- Obsidian (notes)
-
-### Authentication & Cloud
-- **Azure Authentication CLI** (version 0.9.2)
-- GitHub SSH key setup with ED25519 encryption
+### Applications
+- **GlazeWM** - Tiling window manager
+- **Zebar** - Status bar
+- **PowerToys** - Windows utilities
+- **Obsidian** - Note-taking
+- **.NET SDK** - Development framework
+- **JetBrains Mono Nerd Font**
 
 ### Windows Features
-- Developer Mode enabled
-- WSL 2 (Windows Subsystem for Linux)
-- Virtual Machine Platform
-- OpenSSH client and server
+- Developer Mode
+- WSL 2
+- OpenSSH
 
 ### Optional
-- **Capsicain** keyboard customization (with `-InstallKeyboard` flag)
+- **Capsicain** - Keyboard customization
 
-## Available Scripts
+---
 
-### `run.ps1` (Recommended)
+## Daily Usage
 
-Main orchestration script that runs the complete setup:
-1. Windows development configuration (`win.ps1`)
-2. GitHub SSH setup (`gh.ps1`)
-3. Package installation (`install.ps1`)
-4. Optional keyboard setup
+### Managing Dotfiles
 
-**Usage:**
+Use `dot` instead of `git` to manage your dotfiles:
+
 ```powershell
-cd $HOME\projects\win-dot\scripts
-./run.ps1                    # Standard setup
-./run.ps1 -InstallKeyboard   # Include Capsicain keyboard
+# Check status
+dot status
+
+# Add files
+dot add .config/powershell/profile.ps1
+
+# Commit changes
+dot commit -m "Update PowerShell profile"
+
+# Push to remote
+dot push
 ```
 
-### `gh.ps1`
+### Available Scripts
 
-Configures GitHub authentication with SSH keys:
-- Installs OpenSSH
-- Generates ED25519 SSH key
-- Authenticates with GitHub CLI
-- Uploads public key to GitHub
+All scripts are in `$HOME\scripts`:
 
-**Usage:**
-```powershell
-./gh.ps1
-```
+| Script | Purpose |
+|--------|---------|
+| `run.ps1` | Complete setup (recommended for first run) |
+| `win.ps1` | Configure Windows development features |
+| `gh.ps1` | Set up GitHub SSH authentication |
+| `install-packages.ps1` | Install all tools and applications |
+| `install-keyboard.ps1` | Install Capsicain keyboard customization |
+| `clone-repos.ps1` | Clone your project repositories |
+| `setup-nvim-config.ps1` | Set up Neovim configuration |
 
-### `win.ps1`
-
-Configures Windows for development:
-- Enables Developer Mode
-- Installs and configures WSL 2
-- Enables Virtual Machine Platform
-
-**Usage:**
-```powershell
-./win.ps1
-```
-
-### `install.ps1`
-
-Orchestrates package installation:
-- Calls `install-packages.ps1`
-- Optionally calls `install-keyboard.ps1`
-
-**Usage:**
-```powershell
-./install.ps1                    # Standard installation
-./install.ps1 -InstallKeyboard   # Include keyboard setup
-```
-
-### `install-packages.ps1`
-
-Installs all development tools and applications via Scoop and Winget.
-
-**Usage:**
-```powershell
-./install-packages.ps1
-```
-
-### `install-keyboard.ps1`
-
-Clones and sets up Capsicain keyboard customization:
-- Clones repo to `~/projects/keyboard/repo`
-- Downloads latest release from GitHub
-- Updates if already installed
-
-**Usage:**
-```powershell
-./install-keyboard.ps1
-```
+---
 
 ## Requirements
 
 - Windows 10/11
-- PowerShell 5.1 or later
-- Administrator privileges (for most scripts)
+- PowerShell 5.1+
+- Administrator privileges
 - Internet connection
 
+---
 
-## Powershell Dotfiles setup
+## Troubleshooting
 
-```powershell
-git clone --bare git@github.com:eduuh/win-dot.git $HOME/projects/win-dot-bare
+**Profile not loading?**
+Restart PowerShell or run `. $PROFILE`
 
-function dot {
-    param(
-        [Parameter(ValueFromRemainingArguments = $true)]
-        [string[]]$Args
-    )
-    git --git-dir="$HOME/projects/win-dot-bare" --work-tree="$HOME" @Args
-}
+**Scoop install fails?**
+Run as Administrator and check your execution policy: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
+**SSH key issues?**
+Run `./scripts/gh.ps1` to reconfigure GitHub authentication
 
-dot config status.showUntrackedFiles no
-```
+**GlazeWM not tiling properly?**
+Reload config with `glazewm reload` or restart GlazeWM
