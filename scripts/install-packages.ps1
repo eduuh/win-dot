@@ -3,28 +3,103 @@
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
+function Write-Status($msg, $color = "Cyan") {
+    Write-Host "==> $msg" -ForegroundColor $color
+}
+
+function Install-ScoopPackage($package) {
+    try {
+        $pkgName = $package -replace '^[^/]+/', ''
+        if (scoop list $pkgName 2>$null) {
+            Write-Status "$pkgName already installed" "Green"
+            return $true
+        }
+
+        Write-Status "Installing $package..."
+        scoop install $package *>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Status "Installed $package" "Green"
+            return $true
+        } else {
+            Write-Status "Failed to install $package (exit code: $LASTEXITCODE)" "Yellow"
+            return $false
+        }
+    }
+    catch {
+        Write-Status "Error installing $package`: $_" "Yellow"
+        return $false
+    }
+}
+
+function Install-WingetPackage($package) {
+    try {
+        Write-Status "Checking $package..."
+        $installed = winget list --id $package --exact 2>$null
+        if ($installed -match $package) {
+            Write-Status "$package already installed" "Green"
+            return $true
+        }
+
+        Write-Status "Installing $package..."
+        winget install --id $package --source winget --accept-source-agreements --accept-package-agreements --silent
+        if ($LASTEXITCODE -eq 0) {
+            Write-Status "Installed $package" "Green"
+            return $true
+        } else {
+            Write-Status "Failed to install $package (exit code: $LASTEXITCODE)" "Yellow"
+            return $false
+        }
+    }
+    catch {
+        Write-Status "Error installing $package`: $_" "Yellow"
+        return $false
+    }
+}
+
 # Check if Scoop is installed, install if needed
 if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
-    Write-Host "Installing Scoop package manager..."
-    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-    Invoke-WebRequest -UseBasicParsing -Uri get.scoop.sh | Invoke-Expression
-    
-    # Add Scoop to the current session path
-    $env:PATH = "$env:USERPROFILE\scoop\shims;$env:PATH"
-    Write-Host "Scoop installed successfully."
+    Write-Status "Installing Scoop package manager..."
+    try {
+        Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+        Invoke-WebRequest -UseBasicParsing -Uri get.scoop.sh | Invoke-Expression
+
+        # Add Scoop to the current session path
+        $env:PATH = "$env:USERPROFILE\scoop\shims;$env:PATH"
+
+        # Verify Scoop is now available
+        if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+            throw "Scoop installation failed - command not found after install"
+        }
+        Write-Status "Scoop installed successfully" "Green"
+    }
+    catch {
+        Write-Host "Failed to install Scoop: $_" -ForegroundColor Red
+        exit 1
+    }
+} else {
+    Write-Status "Scoop already installed" "Green"
 }
 
 # Scoop Packages
-Write-Host "Installing Scoop packages..."
-scoop update
-scoop bucket add extras
-scoop bucket add main
-scoop bucket add versions
+Write-Status "Setting up Scoop buckets..."
+try {
+    scoop update *>&1 | Out-Null
+    scoop bucket add extras 2>$null
+    scoop bucket add main 2>$null
+    scoop bucket add versions 2>$null
+    Write-Status "Scoop buckets configured" "Green"
+}
+catch {
+    Write-Status "Warning: Issue configuring buckets: $_" "Yellow"
+}
 
+Write-Status "Installing Scoop packages..."
 $scoopPackages = @("extras/obsidian","main/neovim","git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship")
+$scoopFailed = @()
 foreach ($tool in $scoopPackages) {
-    scoop install $tool
-    Write-Host "Installed $tool."
+    if (-not (Install-ScoopPackage $tool)) {
+        $scoopFailed += $tool
+    }
 }
 
 # Winget Packages
@@ -39,7 +114,8 @@ $wingetPackages = @(
     "Microsoft.DotNet.AspNetCore.6",
     "Microsoft.DotNet.DesktopRuntime.6",
     "Microsoft.DotNet.AspNetCore.6",
-    "DEVCOM.JetBrainsMonoNerdFont"
+    "DEVCOM.JetBrainsMonoNerdFont",
+    "Microsoft.AzureCLI"
 )
 
 foreach ($pkg in $wingetPackages) {
@@ -62,6 +138,33 @@ if ($?) {
 }
 if ($?) {
     Remove-Item $script
+}
+
+# Setup Neovim configuration
+Write-Host "Setting up Neovim configuration..."
+$nvimSetupScript = Join-Path $PSScriptRoot "setup-nvim-config.ps1"
+if (Test-Path $nvimSetupScript) {
+    & $nvimSetupScript
+} else {
+    Write-Host "Warning: setup-nvim-config.ps1 not found" -ForegroundColor Yellow
+}
+
+# Azure CLI Extensions
+Write-Host "Installing Azure CLI extensions..."
+if (Get-Command az -ErrorAction SilentlyContinue) {
+    try {
+        az extension add --name azure-devops --yes 2>&1 | Out-Host
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Installed Azure DevOps extension" -ForegroundColor Green
+        } else {
+            Write-Host "Warning: Failed to install Azure DevOps extension" -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host "Warning: Error installing Azure DevOps extension: $_" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "Azure CLI not found, skipping extension installation" -ForegroundColor Yellow
 }
 
 Write-Host "✅ Package installation complete."

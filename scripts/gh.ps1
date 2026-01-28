@@ -18,21 +18,70 @@ function Require-Admin {
 
 function Install-OpenSSH {
     Write-Status "Installing OpenSSH..."
-    Add-WindowsCapability -Online -Name OpenSSH.Client*
-    Add-WindowsCapability -Online -Name OpenSSH.Server*
+    try {
+        $clientResult = Add-WindowsCapability -Online -Name OpenSSH.Client* -ErrorAction Stop
+        if ($clientResult.State -eq "Installed") {
+            Write-Status "OpenSSH Client installed" "Green"
+        }
+    }
+    catch {
+        Write-Status "Warning: OpenSSH Client may already be installed or failed: $_" "Yellow"
+    }
+
+    try {
+        $serverResult = Add-WindowsCapability -Online -Name OpenSSH.Server* -ErrorAction Stop
+        if ($serverResult.State -eq "Installed") {
+            Write-Status "OpenSSH Server installed" "Green"
+        }
+    }
+    catch {
+        Write-Status "Warning: OpenSSH Server installation failed (not critical): $_" "Yellow"
+    }
 }
 
 function Ensure-SSHAgent {
     Write-Status "Enabling and starting ssh-agent..."
-    Set-Service -Name ssh-agent -StartupType Automatic
-    Start-Service ssh-agent
+    try {
+        Set-Service -Name ssh-agent -StartupType Automatic -ErrorAction Stop
+        Start-Service ssh-agent -ErrorAction Stop
+
+        # Verify the service is running
+        $service = Get-Service ssh-agent
+        if ($service.Status -ne "Running") {
+            throw "ssh-agent service is not running"
+        }
+        Write-Status "ssh-agent is running" "Green"
+    }
+    catch {
+        Write-Host "Error: Failed to start ssh-agent: $_" -ForegroundColor Red
+        exit 1
+    }
 }
 
 function Generate-SSHKey {
     if (-Not (Test-Path "$KeyPath")) {
         Write-Status "Generating SSH key at $KeyPath..."
-        mkdir -Force (Split-Path $KeyPath) | Out-Null
-        ssh-keygen -t ed25519 -C $GitHubEmail -f $KeyPath
+        try {
+            $sshDir = Split-Path $KeyPath
+            if (-not (Test-Path $sshDir)) {
+                New-Item -ItemType Directory -Path $sshDir -Force | Out-Null
+            }
+
+            # Generate key with empty passphrase
+            ssh-keygen -t ed25519 -C $GitHubEmail -f $KeyPath -N '""' 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+                throw "ssh-keygen failed with exit code $LASTEXITCODE"
+            }
+
+            if (-not (Test-Path "$KeyPath.pub")) {
+                throw "SSH public key was not created"
+            }
+            Write-Status "SSH key generated successfully" "Green"
+        }
+        catch {
+            Write-Host "Error: Failed to generate SSH key: $_" -ForegroundColor Red
+            exit 1
+        }
     } else {
         Write-Status "SSH key already exists at $KeyPath" "Green"
     }
@@ -40,7 +89,24 @@ function Generate-SSHKey {
 
 function Add-Key-To-Agent {
     Write-Status "Adding SSH key to ssh-agent..."
-    ssh-add $KeyPath
+    try {
+        # Check if key is already added
+        $addedKeys = ssh-add -l 2>&1
+        if ($addedKeys -match [regex]::Escape($KeyPath)) {
+            Write-Status "SSH key already added to agent" "Green"
+            return
+        }
+
+        ssh-add $KeyPath 2>&1 | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            throw "ssh-add failed with exit code $LASTEXITCODE"
+        }
+        Write-Status "SSH key added to agent" "Green"
+    }
+    catch {
+        Write-Host "Error: Failed to add SSH key to agent: $_" -ForegroundColor Red
+        exit 1
+    }
 }
 
 function Ensure-GitHubCLI {
