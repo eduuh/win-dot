@@ -140,6 +140,17 @@ if ($?) {
     Remove-Item $script
 }
 
+# PSMUX - PowerShell terminal multiplexer
+Write-Host "Installing PSMUX..."
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-RestMethod https://raw.githubusercontent.com/marlocarlo/psmux/master/scripts/install.ps1 | Invoke-Expression
+    Write-Host "Installed PSMUX." -ForegroundColor Green
+}
+catch {
+    Write-Host "Warning: Failed to install PSMUX: $_" -ForegroundColor Yellow
+}
+
 # Setup Neovim configuration
 Write-Host "Setting up Neovim configuration..."
 $nvimSetupScript = Join-Path $PSScriptRoot "setup-nvim-config.ps1"
