@@ -143,9 +143,43 @@ if ($?) {
 # PSMUX - PowerShell terminal multiplexer
 Write-Host "Installing PSMUX..."
 try {
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-RestMethod https://raw.githubusercontent.com/marlocarlo/psmux/master/scripts/install.ps1 | Invoke-Expression
-    Write-Host "Installed PSMUX." -ForegroundColor Green
+    $psmuxInstallDir = "$env:LOCALAPPDATA\psmux"
+
+    # Check if already installed
+    if ((Test-Path "$psmuxInstallDir\psmux.exe") -and (Get-Command psmux -ErrorAction SilentlyContinue)) {
+        Write-Host "PSMUX already installed" -ForegroundColor Green
+    }
+    else {
+        $tempZip = "$env:TEMP\psmux-download.zip"
+        $tempExtract = "$env:TEMP\psmux-extract"
+
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri 'https://github.com/marlocarlo/psmux/releases/download/v0.2.1/psmux-windows-x86_64.zip' -OutFile $tempZip
+
+        if (Test-Path $tempExtract) { Remove-Item -Recurse -Force $tempExtract }
+        Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force
+
+        if (-not (Test-Path $psmuxInstallDir)) {
+            New-Item -ItemType Directory -Path $psmuxInstallDir -Force | Out-Null
+        }
+
+        $sourceDir = Join-Path $tempExtract "psmux-windows-x86_64"
+        Copy-Item -Path "$sourceDir\*.exe" -Destination $psmuxInstallDir -Force
+
+        # Add to PATH
+        $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+        if ($userPath -notlike "*$psmuxInstallDir*") {
+            $newPath = "$userPath;$psmuxInstallDir"
+            [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+            $env:Path = "$env:Path;$psmuxInstallDir"
+        }
+
+        # Cleanup
+        Remove-Item $tempZip -Force
+        Remove-Item -Recurse -Force $tempExtract
+
+        Write-Host "Installed PSMUX" -ForegroundColor Green
+    }
 }
 catch {
     Write-Host "Warning: Failed to install PSMUX: $_" -ForegroundColor Yellow
