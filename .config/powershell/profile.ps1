@@ -339,13 +339,32 @@ function Invoke-GoApp {
     if ($appId) { Start-Process "shell:AppsFolder\$appId" }
 }
 
+function Invoke-GhCodespaceAuthRefresh {
+    <#
+    .SYNOPSIS
+        Run `gh auth refresh -h github.com -s codespace` interactively.
+    .DESCRIPTION
+        Triggers gh's device-code flow so the user can grant the `codespace`
+        OAuth scope without remembering the exact command. Returns $true on
+        success, $false otherwise.
+    #>
+    [CmdletBinding()]
+    param()
+    Write-Host "Refreshing gh auth with 'codespace' scope (one-time device-code prompt)..." -ForegroundColor Cyan
+    & gh auth refresh -h github.com -s codespace
+    return ($LASTEXITCODE -eq 0)
+}
+
 function Invoke-GoCodespace {
     <#
     .SYNOPSIS
         Fuzzy-pick a GitHub Codespace and open it in local VS Code.
     .DESCRIPTION
-        Requires `gh` with codespaces access. Fails gracefully with hints
-        when gh is missing, the user isn't authed, or there are no codespaces.
+        Requires `gh` with codespaces access. If `gh codespace list` or
+        `gh codespace code` fails (typically because the token lacks the
+        `codespace` scope), automatically runs
+        `gh auth refresh -h github.com -s codespace` and retries once, so
+        the user doesn't have to remember the magic command.
     #>
     [CmdletBinding()]
     param()
@@ -357,11 +376,22 @@ function Invoke-GoCodespace {
         Write-Host "gh is not installed. Install with: scoop install gh" -ForegroundColor Yellow
         return
     }
+
+    # Try once. If gh codespace list fails, assume an auth/scope issue,
+    # refresh interactively, and retry exactly once.
     $json = & gh codespace list --json name,repository,state 2>$null
     if ($LASTEXITCODE -ne 0 -or -not $json) {
-        Write-Host "Could not list codespaces. Try 'gh auth login' or create one with 'gh codespace create'." -ForegroundColor Yellow
-        return
+        if (-not (Invoke-GhCodespaceAuthRefresh)) {
+            Write-Host "Auth refresh failed. Try 'gh auth login' manually, then re-run 'go cs'." -ForegroundColor Yellow
+            return
+        }
+        $json = & gh codespace list --json name,repository,state 2>$null
+        if ($LASTEXITCODE -ne 0 -or -not $json) {
+            Write-Host "Still couldn't list codespaces after auth refresh." -ForegroundColor Yellow
+            return
+        }
     }
+
     try {
         $cs = @($json | ConvertFrom-Json)
     } catch {
@@ -372,6 +402,7 @@ function Invoke-GoCodespace {
         Write-Host "No codespaces found. Create one with: gh codespace create" -ForegroundColor Yellow
         return
     }
+
     $tab   = [char]9
     $clean = { param($s) ([string]$s -replace "[`t`r`n]", ' ') }
     $lines = foreach ($c in $cs) {
@@ -380,7 +411,15 @@ function Invoke-GoCodespace {
     $selected = $lines | & fzf --delimiter $tab --with-nth=2,3,1 --prompt='go cs> '
     if (-not $selected) { return }
     $name = ($selected -split $tab)[0]
-    if ($name) { & gh codespace code -c $name }
+    if (-not $name) { return }
+
+    & gh codespace code -c $name
+    if ($LASTEXITCODE -ne 0) {
+        # Rare: list succeeded but code step failed on auth. Refresh + retry once.
+        if (Invoke-GhCodespaceAuthRefresh) {
+            & gh codespace code -c $name
+        }
+    }
 }
 
 # Single source of truth for `go` subcommands. Adding one is a one-line edit
