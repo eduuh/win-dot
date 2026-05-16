@@ -29,6 +29,9 @@
   "copyFormatting": "none",
   "copyOnSelect": true,
   "defaultProfile": "{c0ffee01-d2c0-4e8a-b1a7-7373731ad510}",
+  "launchMode": "focus",
+  "showTerminalTitleInTitlebar": false,
+  "showTabsInTitlebar": false,
   "keybindings": [
     {
       "id": "User.copy.644BA8F2",
@@ -56,7 +59,9 @@
     "defaults": {
       "font": {
         "face": "JetBrainsMono Nerd Font"
-      }
+      },
+      "suppressApplicationTitle": true,
+      "tabTitle": " "
     },
     "list": [
       {

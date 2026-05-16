@@ -43,6 +43,8 @@ Both are gitignored. Use them for work identities, tenant IDs, anything you don'
 ```text
 .config/powershell/profile.ps1    # canonical pwsh profile (THE source of truth)
 .config/tmux/start-main.ps1       # psmux session launcher (notes / personal / htop)
+.config/wt/install-shortcuts.ps1  # creates Desktop + Start Menu "Terminal" shortcut
+                                  # (Windows Terminal w/ powershell-tmux + ubuntu-wsl tabs)
 .gitconfig                         # global git; [include]s ~/.gitconfig.local
 .tmux.conf                         # psmux config (WSL parity)
 AppData/.../settings.json          # Windows Terminal: powershell-tmux + ubuntu-wsl
