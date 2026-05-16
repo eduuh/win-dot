@@ -329,8 +329,17 @@ function Get-GoProjectFolders {
 }
 
 function Invoke-GoFolder {
+    <#
+    .SYNOPSIS
+        Fuzzy-pick a project folder. Default action is cd.
+    .DESCRIPTION
+        Hotkeys inside fzf:
+          Enter   cd into the selected folder
+          Ctrl-Y  copy the full path to the clipboard
+          Ctrl-O  open the folder in Explorer
+    #>
     [CmdletBinding()]
-    param()
+    param([switch]$CopyPath)
     if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
         Write-Host "fzf is not installed. Install with: scoop install fzf" -ForegroundColor Yellow
         return
@@ -339,10 +348,22 @@ function Invoke-GoFolder {
     if (-not $folders -or $folders.Count -eq 0) { return }
     $tab = [char]9
     $lines = $folders | ForEach-Object { $_.Name + $tab + $_.FullName }
-    $selected = $lines | & fzf --delimiter $tab --with-nth=1 --prompt='go folder> '
+    $selected = $lines | & fzf `
+        --delimiter $tab `
+        --with-nth=1 `
+        --prompt='go folder> ' `
+        --header 'Enter: cd  |  Ctrl-Y: copy path  |  Ctrl-O: Explorer' `
+        --bind 'ctrl-y:execute-silent(echo {2}| clip)+abort' `
+        --bind 'ctrl-o:execute-silent(start "" "{2}")+abort'
     if (-not $selected) { return }
     $path = ($selected -split $tab)[1]
-    if ($path) { Set-Location -LiteralPath $path }
+    if (-not $path) { return }
+    if ($CopyPath) {
+        Set-Clipboard -Value $path
+        Write-Host "Copied: $path" -ForegroundColor Green
+        return
+    }
+    Set-Location -LiteralPath $path
 }
 
 function Invoke-GoExplorer {
@@ -356,7 +377,12 @@ function Invoke-GoExplorer {
     if (-not $folders -or $folders.Count -eq 0) { return }
     $tab = [char]9
     $lines = $folders | ForEach-Object { $_.Name + $tab + $_.FullName }
-    $selected = $lines | & fzf --delimiter $tab --with-nth=1 --prompt='go explorer> '
+    $selected = $lines | & fzf `
+        --delimiter $tab `
+        --with-nth=1 `
+        --prompt='go explorer> ' `
+        --header 'Enter: open in Explorer  |  Ctrl-Y: copy path' `
+        --bind 'ctrl-y:execute-silent(echo {2}| clip)+abort'
     if (-not $selected) { return }
     $path = ($selected -split $tab)[1]
     if ($path) { Start-Process explorer.exe -ArgumentList $path }
@@ -371,6 +397,8 @@ function Invoke-GoApp {
         — which have no .lnk entries under Start Menu\Programs — are included.
         Launch path is shell:AppsFolder\<AppID>, which works uniformly for
         both classic Win32 and modern UWP apps.
+
+        Hotkeys: Enter launches, Ctrl-Y copies the AppID.
     #>
     [CmdletBinding()]
     param()
@@ -390,7 +418,12 @@ function Invoke-GoApp {
     $tab    = [char]9
     $clean  = { param($s) ([string]$s -replace "[`t`r`n]", ' ') }
     $lines  = foreach ($a in $apps) { (& $clean $a.Name) + $tab + (& $clean $a.AppID) }
-    $selected = $lines | & fzf --delimiter $tab --with-nth=1 --prompt='go app> '
+    $selected = $lines | & fzf `
+        --delimiter $tab `
+        --with-nth=1 `
+        --prompt='go app> ' `
+        --header 'Enter: launch  |  Ctrl-Y: copy AppID' `
+        --bind 'ctrl-y:execute-silent(echo {2}| clip)+abort'
     if (-not $selected) { return }
     $appId = ($selected -split $tab)[1]
     if ($appId) { Start-Process "shell:AppsFolder\$appId" }
@@ -697,7 +730,8 @@ function Invoke-GoAll {
     $clean = { param($s) ([string]$s -replace "[`t`r`n]", ' ') }
 
     # Index each item so we can recover the exact record after fzf returns,
-    # regardless of any quoting hazards in Data.
+    # regardless of any quoting hazards in Data. Hidden 5th column carries
+    # the raw Data so Ctrl-Y can yank it into the clipboard via clip.exe.
     $lines = for ($i = 0; $i -lt $items.Count; $i++) {
         $it       = $items[$i]
         $color    = $colors[$it.Type]
@@ -705,7 +739,8 @@ function Invoke-GoAll {
         $typeCol  = "$color$($it.Type.PadRight(6))$reset"
         $label    = & $clean $it.Label
         $detail   = & $clean $it.Detail
-        $typeCol + $tab + $label + $tab + $detail + $tab + $i
+        $data     = & $clean $it.Data
+        $typeCol + $tab + $label + $tab + $detail + $tab + $i + $tab + $data
     }
 
     $selected = $lines | & fzf `
@@ -713,7 +748,8 @@ function Invoke-GoAll {
         --delimiter $tab `
         --with-nth=1,2,3 `
         --prompt='go> ' `
-        --header 'type   label                              detail'
+        --header 'Enter: open  |  Ctrl-Y: copy data (path/URL/AppID/codespace)' `
+        --bind 'ctrl-y:execute-silent(echo {5}| clip)+abort'
 
     if (-not $selected) { return }
     $idx = ($selected -split $tab)[3] -as [int]
