@@ -63,6 +63,9 @@ That's it! Your development environment is now configured.
 - **Node.js LTS** - JavaScript runtime
 - **Neovim** - Text editor
 - **Starship** - Shell prompt
+- **D2** - Type-to-draw diagrams (live-preview in browser via `d2w`)
+- **psmux** - tmux-compatible multiplexer for Windows (reads `~/.tmux.conf`)
+- **btop4win** - htop-equivalent process/resource monitor (`btop`)
 
 ### Development Utilities
 - fzf, ripgrep, bat, 7zip, make, cmake
