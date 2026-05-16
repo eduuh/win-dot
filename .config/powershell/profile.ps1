@@ -512,9 +512,162 @@ function Invoke-GoView {
     Start-Process -FilePath $edgePath -ArgumentList $argList | Out-Null
 }
 
+function Get-GoAllItems {
+    <#
+    .SYNOPSIS
+        Aggregate every `go` source into a flat list of items.
+    .DESCRIPTION
+        Returns objects with Type, Label, Detail, Data so the unified
+        picker can render them in one fzf list and dispatch by Type.
+    #>
+    [CmdletBinding()]
+    param([switch]$NoCodespaces)
+
+    $items = [System.Collections.Generic.List[object]]::new()
+
+    if (Get-Command Get-StartApps -ErrorAction SilentlyContinue) {
+        foreach ($a in (Get-StartApps)) {
+            $items.Add([pscustomobject]@{
+                Type = 'app'; Label = [string]$a.Name; Detail = ''; Data = [string]$a.AppID
+            })
+        }
+    }
+
+    foreach ($f in (Get-GoProjectFolders)) {
+        $items.Add([pscustomobject]@{
+            Type = 'folder'; Label = $f.Name; Detail = $f.FullName; Data = $f.FullName
+        })
+    }
+
+    try {
+        $bookmarks = Invoke-EdgeBookmark -List
+        foreach ($b in $bookmarks) {
+            $items.Add([pscustomobject]@{
+                Type = 'fav'; Label = [string]$b.Name; Detail = [string]$b.Url; Data = [string]$b.Url
+            })
+        }
+    } catch {
+        # Bookmarks unavailable — skip silently.
+    }
+
+    if (-not $NoCodespaces -and (Get-Command gh -ErrorAction SilentlyContinue)) {
+        $json = & gh codespace list --json name,repository,state 2>$null
+        if ($LASTEXITCODE -eq 0 -and $json) {
+            try {
+                foreach ($c in ($json | ConvertFrom-Json)) {
+                    $items.Add([pscustomobject]@{
+                        Type   = 'code'
+                        Label  = [string]$c.name
+                        Detail = "$($c.repository) · $($c.state)"
+                        Data   = [string]$c.name
+                    })
+                }
+            } catch {
+                # Parse failure — skip silently.
+            }
+        }
+    }
+
+    return $items
+}
+
+function Invoke-GoItem {
+    <#
+    .SYNOPSIS
+        Dispatch a unified-picker item to the right action based on Type.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)] $Item)
+    if (-not $Item) { return }
+    switch ($Item.Type) {
+        'code'   {
+            & gh codespace code -c $Item.Data
+            if ($LASTEXITCODE -ne 0) {
+                if (Invoke-GhCodespaceAuthRefresh) {
+                    & gh codespace code -c $Item.Data
+                }
+            }
+        }
+        'app'    { Start-Process "shell:AppsFolder\$($Item.Data)" }
+        'folder' { Set-Location -LiteralPath $Item.Data }
+        'fav'    {
+            if (Get-Command msedge -ErrorAction SilentlyContinue) {
+                Start-Process msedge $Item.Data
+            } else {
+                Start-Process $Item.Data
+            }
+        }
+        default  { Write-Warning "Unknown item type: $($Item.Type)" }
+    }
+}
+
+function Invoke-GoAll {
+    <#
+    .SYNOPSIS
+        Unified fuzzy picker across bookmarks, folders, apps, and codespaces.
+    .DESCRIPTION
+        Mixes every source into one fzf list, prefixed and colored by type.
+        Pick anything; the type prefix determines the action:
+          code   -> open codespace in VS Code
+          app    -> launch Start Menu app
+          folder -> cd into the folder
+          fav    -> open URL in Edge
+
+        Pass -NoCodespaces to skip the gh network call for a snappier list.
+    #>
+    [CmdletBinding()]
+    param([switch]$NoCodespaces)
+
+    if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
+        Write-Host "fzf is not installed. Install with: scoop install fzf" -ForegroundColor Yellow
+        return
+    }
+
+    $items = @(Get-GoAllItems -NoCodespaces:$NoCodespaces)
+    if (-not $items -or $items.Count -eq 0) {
+        Write-Host "No items found." -ForegroundColor Yellow
+        return
+    }
+
+    $tab    = [char]9
+    $reset  = "`e[0m"
+    $colors = @{
+        'code'   = "`e[32m"
+        'app'    = "`e[36m"
+        'folder' = "`e[33m"
+        'fav'    = "`e[35m"
+    }
+    $clean = { param($s) ([string]$s -replace "[`t`r`n]", ' ') }
+
+    # Index each item so we can recover the exact record after fzf returns,
+    # regardless of any quoting hazards in Data.
+    $lines = for ($i = 0; $i -lt $items.Count; $i++) {
+        $it       = $items[$i]
+        $color    = $colors[$it.Type]
+        if (-not $color) { $color = '' }
+        $typeCol  = "$color$($it.Type.PadRight(6))$reset"
+        $label    = & $clean $it.Label
+        $detail   = & $clean $it.Detail
+        $typeCol + $tab + $label + $tab + $detail + $tab + $i
+    }
+
+    $selected = $lines | & fzf `
+        --ansi `
+        --delimiter $tab `
+        --with-nth=1,2,3 `
+        --prompt='go> ' `
+        --header 'type   label                              detail'
+
+    if (-not $selected) { return }
+    $idx = ($selected -split $tab)[3] -as [int]
+    if ($null -eq $idx -or $idx -lt 0 -or $idx -ge $items.Count) { return }
+    Invoke-GoItem -Item $items[$idx]
+}
+
 # Single source of truth for `go` subcommands. Adding one is a one-line edit
 # here — the dispatcher, help text, and tab completion all read from this map.
 $script:GoSubcommands = [ordered]@{
+    all      = @{ Handler = 'Invoke-GoAll';        Description = 'Unified picker across all sources (-NoCodespaces to skip network)'; Aliases = @('a') }
     fav      = @{ Handler = 'Invoke-EdgeBookmark'; Description = 'Fuzzy-pick an Edge bookmark and open it' }
     folder   = @{ Handler = 'Invoke-GoFolder';     Description = 'Fuzzy-pick a folder under ~/projects and cd into it' }
     explorer = @{ Handler = 'Invoke-GoExplorer';   Description = 'Fuzzy-pick a folder under ~/projects and open it in Explorer' }
