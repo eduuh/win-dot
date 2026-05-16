@@ -209,6 +209,18 @@ function Format-GoCodespaceDetail {
 
 $script:EdgeDebugPort = 9222
 
+# Shared fzf options for every `go` picker. `--height` keeps fzf inline (no
+# alt-screen swap), so picking an item doesn't flash close/reopen the shell.
+# `--reverse --border` keep the inline layout readable.
+$script:GoFzfBase = @(
+    '--ansi',
+    '--height=80%',
+    '--min-height=15',
+    '--reverse',
+    '--border',
+    '--no-mouse'
+)
+
 function Get-EdgeOpenTabs {
     [CmdletBinding()]
     param(
@@ -551,7 +563,7 @@ function Invoke-EdgeBookmark {
         (& $clean $it.Url)
     }
 
-    $selected = $lines | & fzf `
+    $selected = $lines | & fzf @script:GoFzfBase `
         --delimiter $tab `
         --with-nth=1,2,3 `
         --preview "echo {4}" `
@@ -674,7 +686,7 @@ function Invoke-GoFolder {
         $parent = (Format-GoFolderDetail -FullPath $_.FullName).Parent
         $_.Name + $tab + $parent + $tab + $_.FullName
     }
-    $selected = $lines | & fzf `
+    $selected = $lines | & fzf @script:GoFzfBase `
         --delimiter $tab `
         --with-nth=1,2 `
         --prompt='go folder> ' `
@@ -706,7 +718,7 @@ function Invoke-GoExplorer {
         $parent = (Format-GoFolderDetail -FullPath $_.FullName).Parent
         $_.Name + $tab + $parent + $tab + $_.FullName
     }
-    $selected = $lines | & fzf `
+    $selected = $lines | & fzf @script:GoFzfBase `
         --delimiter $tab `
         --with-nth=1,2 `
         --prompt='go explorer> ' `
@@ -754,7 +766,7 @@ function Invoke-GoApp {
         $detail = (Format-GoAppDetail -AppId $appId).Detail
         (& $clean $a.Name) + $tab + (& $clean $detail) + $tab + (& $clean $appId)
     }
-    $selected = $lines | & fzf `
+    $selected = $lines | & fzf @script:GoFzfBase `
         --delimiter $tab `
         --with-nth=1,2 `
         --prompt='go app> ' `
@@ -838,7 +850,7 @@ function Invoke-GoCodespace {
         $detail = (Format-GoCodespaceDetail -Codespace $c).Detail
         (& $clean $c.name) + $tab + (& $clean $detail)
     }
-    $selected = $lines | & fzf --delimiter $tab --with-nth=2,1 --prompt='go cs> '
+    $selected = $lines | & fzf @script:GoFzfBase --delimiter $tab --with-nth=2,1 --prompt='go cs> '
     if (-not $selected) { return }
     $name = ($selected -split $tab)[0]
     if (-not $name) { return }
@@ -1109,8 +1121,7 @@ function Invoke-GoAll {
         $typeCol + $tab + $labelCol + $tab + $detailCol + $tab + $r.Index + $tab + $r.Data
     }
 
-    $selected = $lines | & fzf `
-        --ansi `
+    $selected = $lines | & fzf @script:GoFzfBase `
         --delimiter $tab `
         --with-nth=1,2,3 `
         --prompt='go> ' `
