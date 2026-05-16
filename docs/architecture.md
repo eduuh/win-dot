@@ -119,6 +119,27 @@ That makes re-opening Terminal a free no-op (just reattach), and a fresh boot ge
 
 ---
 
+## Helix config
+
+The editor on Windows is Helix (`hx`). Config lives at `AppData/Roaming/helix/` — that's where `hx --health` shows the config path on Windows, so we track it there rather than under `.config/helix/`.
+
+Two files:
+
+- **`config.toml`** — theme (`modus_vivendi` to match the nvim setup), editor options ported from `~/.config/nvim/lua/config/options.lua` (scrolloff, soft-wrap, indent guides, cursorline, etc.), and a small set of key overrides that preserve nvim muscle memory:
+  - `C-s` save (normal + insert)
+  - `backspace` → previous buffer (nvim `<BS> = <C-^>`)
+  - `;n` / `;p` → next / previous buffer (nvim `cnext` / `cprev`)
+  - `<space>ff` / `<space>fw` / `<space>fo` / `<space>fb` — picker aliases matching `<leader>f*` in nvim
+  - `gcc` → toggle line comment (Helix native is `C`, but `gcc` is cheap to add)
+
+  Everything else stays Helix-default — `gd / gr / gi / gy / K / [d / ]d / <space>r / <space>a / <space>s / <space>S / <space>b / <space>f / <space>/` already match the equivalent nvim bindings.
+
+- **`languages.toml`** — language servers (rust-analyzer, typescript-language-server, clangd, lua-language-server, marksman, bash-language-server, pylsp, vscode-css-language-server) and per-filetype formatters (rustfmt, prettier, clang-format, stylua, shfmt, black, d2 fmt). Auto-format on save mirrors `conform.nvim`. Helix has no Mason, so tools must be on PATH — `scripts/install-packages.ps1` adds the necessary scoop / npm / pip installs.
+
+The Helix runtime directory (`AppData/Roaming/helix/runtime/`) is gitignored — it's bundled with the binary and version-specific.
+
+---
+
 ## Windows Terminal profiles
 
 Only two profiles are visible — the rest are auto-discovered by Terminal and hidden via `"hidden": true`:

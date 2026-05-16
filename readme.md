@@ -44,6 +44,7 @@ Both are gitignored. Use them for work identities, tenant IDs, anything you don'
 .config/tmux/start-main.ps1       # psmux session launcher
 .gitconfig                         # global git; [include]s ~/.gitconfig.local
 .tmux.conf                         # psmux config (WSL parity)
+AppData/Roaming/helix/             # helix config.toml + languages.toml (ported from ~/.config/nvim)
 AppData/.../settings.json          # Windows Terminal: powershell-tmux + ubuntu-wsl
 scripts/                           # run.ps1, win.ps1, gh.ps1, install-packages.ps1, …
 docs/architecture.md               # the why

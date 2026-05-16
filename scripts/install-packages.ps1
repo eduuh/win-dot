@@ -164,12 +164,70 @@ catch {
 }
 
 Write-Status "Installing Scoop packages..."
-$scoopPackages = @("extras/obsidian","main/neovim","git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship", "d2")
+$scoopPackages = @(
+    "extras/obsidian","main/neovim","main/helix",
+    "git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship", "d2",
+    # Helix language tooling (mirrors ~/.config/nvim mason + conform setup)
+    "main/llvm",                         # clangd + clang-format
+    "main/shfmt",                        # bash formatter
+    "main/stylua",                       # lua formatter
+    "extras/lua-language-server",        # lua LSP
+    "extras/marksman"                    # markdown LSP
+)
 $scoopFailed = @()
 foreach ($tool in $scoopPackages) {
     if (-not (Install-ScoopPackage $tool)) {
         $scoopFailed += $tool
     }
+}
+
+# Helix LSPs + formatters that live in npm / pip rather than scoop.
+# These mirror mason-tool-installer + conform.nvim in ~/.config/nvim.
+function Install-NpmGlobal($pkg) {
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        Write-Status "npm not on PATH, skipping $pkg" "Yellow"
+        return
+    }
+    $list = & npm list -g --depth=0 2>$null | Out-String
+    if ($list -match [regex]::Escape($pkg)) {
+        Write-Status "$pkg (npm global) already installed" "Green"
+        return
+    }
+    Write-Status "Installing $pkg (npm global)..."
+    & npm install -g $pkg *>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Status "Installed $pkg" "Green"
+    } else {
+        Write-Status "Failed to install $pkg (exit $LASTEXITCODE)" "Yellow"
+    }
+}
+
+function Install-PipUser($pkg) {
+    if (-not (Get-Command pip -ErrorAction SilentlyContinue)) {
+        Write-Status "pip not on PATH, skipping $pkg" "Yellow"
+        return
+    }
+    $show = & pip show $pkg 2>$null
+    if ($show) {
+        Write-Status "$pkg (pip) already installed" "Green"
+        return
+    }
+    Write-Status "Installing $pkg (pip --user)..."
+    & pip install --user --quiet $pkg
+    if ($LASTEXITCODE -eq 0) {
+        Write-Status "Installed $pkg" "Green"
+    } else {
+        Write-Status "Failed to install $pkg (exit $LASTEXITCODE)" "Yellow"
+    }
+}
+
+Write-Status "Installing Helix LSPs / formatters (npm + pip)..."
+foreach ($p in @("typescript", "typescript-language-server", "bash-language-server",
+                  "prettier", "@fsouza/prettierd", "vscode-langservers-extracted")) {
+    Install-NpmGlobal $p
+}
+foreach ($p in @("black", "isort", "python-lsp-server")) {
+    Install-PipUser $p
 }
 
 # Winget Packages

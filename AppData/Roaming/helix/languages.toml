@@ -1,0 +1,125 @@
+# win-dot helix languages
+# Mirrors mason.lua (LSPs) + conform.nvim (formatters) from ~/.config/nvim.
+#
+# Helix has no Mason. Tooling must be on PATH. `scripts/install-packages.ps1`
+# installs the npm / pip / scoop bits referenced below; see docs/architecture.md.
+
+# ---------- Rust ----------
+[language-server.rust-analyzer.config.check]
+command = "clippy"
+
+[language-server.rust-analyzer.config]
+cargo = { features = "all" }
+procMacro = { enable = true }
+
+[[language]]
+name = "rust"
+auto-format = true
+formatter = { command = "rustfmt" }
+
+# ---------- TypeScript / JavaScript ----------
+[language-server.typescript-language-server.config]
+hostInfo = "helix"
+
+[[language]]
+name = "typescript"
+auto-format = true
+language-servers = ["typescript-language-server"]
+formatter = { command = "prettier", args = ["--parser", "typescript"] }
+
+[[language]]
+name = "tsx"
+auto-format = true
+language-servers = ["typescript-language-server"]
+formatter = { command = "prettier", args = ["--parser", "typescript"] }
+
+[[language]]
+name = "javascript"
+auto-format = true
+language-servers = ["typescript-language-server"]
+formatter = { command = "prettier", args = ["--parser", "babel"] }
+
+[[language]]
+name = "jsx"
+auto-format = true
+language-servers = ["typescript-language-server"]
+formatter = { command = "prettier", args = ["--parser", "babel"] }
+
+# ---------- Lua ----------
+[[language]]
+name = "lua"
+auto-format = true
+formatter = { command = "stylua", args = ["-"] }
+language-servers = ["lua-language-server"]
+
+[language-server.lua-language-server.config.Lua.diagnostics]
+globals = ["vim"]
+
+# ---------- C / C++ ----------
+[[language]]
+name = "c"
+auto-format = true
+formatter = { command = "clang-format", args = ["-style=file", "-assume-filename=.c"] }
+language-servers = ["clangd"]
+
+[[language]]
+name = "cpp"
+auto-format = true
+formatter = { command = "clang-format", args = ["-style=file", "-assume-filename=.cpp"] }
+language-servers = ["clangd"]
+
+# ---------- Markdown ----------
+[[language]]
+name = "markdown"
+auto-format = true
+soft-wrap.enable = true
+language-servers = ["marksman"]
+formatter = { command = "prettier", args = ["--parser", "markdown"] }
+
+# ---------- Bash ----------
+[[language]]
+name = "bash"
+auto-format = true
+language-servers = ["bash-language-server"]
+formatter = { command = "shfmt", args = ["-i", "2", "-ci"] }
+
+# ---------- Python ----------
+[[language]]
+name = "python"
+auto-format = true
+language-servers = ["pylsp"]
+formatter = { command = "black", args = ["--quiet", "-"] }
+
+# ---------- YAML / JSON / HTML / CSS ----------
+[[language]]
+name = "yaml"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "yaml"] }
+
+[[language]]
+name = "json"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "json"] }
+
+[[language]]
+name = "html"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "html"] }
+
+[[language]]
+name = "css"
+auto-format = true
+language-servers = ["vscode-css-language-server"]
+formatter = { command = "prettier", args = ["--parser", "css"] }
+
+# ---------- D2 (matches d2w workflow in pwsh profile) ----------
+# Helix has no built-in D2 grammar yet; treat as plain text + format with d2 fmt.
+[[language]]
+name = "d2"
+scope = "source.d2"
+file-types = ["d2"]
+roots = []
+comment-token = "#"
+indent = { tab-width = 2, unit = "  " }
+formatter = { command = "d2", args = ["fmt", "-"] }
+auto-format = true

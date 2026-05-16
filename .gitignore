@@ -5,6 +5,9 @@
 # Tool scratch directories
 .claude/
 
+# Helix runtime is bundled with the binary; never track per-machine copies.
+AppData/Roaming/helix/runtime/
+
 # OS / editor cruft
 $null
 *.bak
