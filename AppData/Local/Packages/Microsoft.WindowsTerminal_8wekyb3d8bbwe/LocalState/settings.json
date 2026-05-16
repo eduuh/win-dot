@@ -29,6 +29,7 @@
   "copyFormatting": "none",
   "copyOnSelect": true,
   "defaultProfile": "{c0ffee01-d2c0-4e8a-b1a7-7373731ad510}",
+  "startupActions": "; new-tab --profile \"ubuntu-wsl\"",
   "launchMode": "focus",
   "showTerminalTitleInTitlebar": false,
   "showTabsInTitlebar": false,
@@ -67,6 +68,7 @@
       {
         "guid": "{c0ffee01-d2c0-4e8a-b1a7-7373731ad510}",
         "name": "powershell-tmux",
+        "tabTitle": "drive",
         "commandline": "\"C:\\Program Files\\PowerShell\\7-preview\\pwsh.exe\" -NoLogo -NoExit -File \"%USERPROFILE%\\.config\\tmux\\start-main.ps1\"",
         "startingDirectory": "%USERPROFILE%\\projects",
         "hidden": false,
