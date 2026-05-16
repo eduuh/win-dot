@@ -8,7 +8,7 @@
 #
 # Helix runtime themes used here are bundled. Browse with `:theme`.
 
-theme = "modus_vivendi"
+theme = "catppuccin_mocha"
 
 [editor]
 # nvim had number=false + relativenumber=false. Match it.
