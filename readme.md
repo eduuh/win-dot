@@ -34,6 +34,7 @@ Both are gitignored. Use them for work identities, tenant IDs, anything you don'
 |---|---|
 | `dot ...` | git against the dotfiles bare repo (also aliased `dotfiles`) |
 | `d2w [file]` | live-preview a [D2](https://d2lang.com) diagram in the browser; opens the file in `$EDITOR` |
+| `go <sub>` | fzf launcher: `fav` (Edge bookmarks) · `folder` (cd into `~/projects/*`) · `explorer` (same, in File Explorer) · `app` (Start-Menu apps, classic + UWP) · `cs` (GitHub Codespaces). `go` alone prints help. |
 | `htop` / `top` | aliases for `btop` |
 | `pwsh -NoProfile -File $HOME\scripts\verify-environment.ps1` | run the 25-check smoke suite |
 
