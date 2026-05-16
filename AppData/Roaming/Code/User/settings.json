@@ -43,22 +43,6 @@
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "mcp": {
-    "servers": {
-      "fluent-pilot": {
-        "type": "sse",
-        "url": "https://chat.fluentui.dev/sse"
-      },
-      "playwright": {
-        "command": "npx",
-        "args": ["-y", "@playwright/mcp@latest"]
-      },
-      "context7": {
-        "command": "npx",
-        "args": ["-y", "@upstash/context7-mcp@latest"]
-      }
-    }
-  },
   "typescript.updateImportsOnFileMove.enabled": "always",
   "github.copilot.selectedCompletionModel": "",
   "git.enableSmartCommit": true,
