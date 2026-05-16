@@ -1,0 +1,11 @@
+# Private / per-machine overrides — never commit.
+.gitconfig.local
+.config/powershell/profile.local.ps1
+
+# Tool scratch directories
+.claude/
+
+# OS / editor cruft
+$null
+*.bak
+*.swp
