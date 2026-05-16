@@ -1,19 +1,26 @@
 [http]
 	postBuffer = 524288000
+
 [user]
 	name = eduuh
 	email = 31909722+eduuh@users.noreply.github.com
-[credential "https://github.com"]
-	helper = 
-	helper = !/usr/bin/gh auth git-credential
-[credential "https://gist.github.com"]
-	helper = 
-	helper = !/usr/bin/gh auth git-credential
+
 [init]
 	defaultBranch = main
-[credential]
-	helper = /mnt/c/Program\\ Files/Git/mingw64/bin/git-credential-manager.exe
-[credential "https://dev.azure.com"]
-	useHttpPath = true
+
 [core]
 	autocrlf = input
+
+# GitHub CLI credential helper (Windows install path)
+[credential "https://github.com"]
+	helper =
+	helper = !'C:/Program Files/GitHub CLI/gh.exe' auth git-credential
+
+[credential "https://gist.github.com"]
+	helper =
+	helper = !'C:/Program Files/GitHub CLI/gh.exe' auth git-credential
+
+# Per-machine private overrides (work identity, Azure DevOps creds, tenant IDs).
+# Kept untracked; create ~/.gitconfig.local on each machine that needs it.
+[include]
+	path = ~/.gitconfig.local
