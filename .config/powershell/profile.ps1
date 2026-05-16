@@ -144,14 +144,31 @@ function Invoke-EdgeBookmark {
 
     .EXAMPLE
         go fav -List | Where-Object Path -like 'bookmark_bar/Work*'
+
+    .EXAMPLE
+        go fav -Edit                   # open Edge's favorites manager
     #>
     [CmdletBinding()]
     param(
         [string]$EdgeProfile = 'Default',
         [switch]$CopyUrl,
         [switch]$PrintUrl,
-        [switch]$List
+        [switch]$List,
+        [switch]$Edit
     )
+
+    if ($Edit) {
+        # Open Edge's native favorites manager so the user can rename / move /
+        # delete bookmarks safely. We deliberately do not mutate the Bookmarks
+        # JSON ourselves — Edge's checksum + file-lock semantics make in-place
+        # edits fragile and likely to be silently reverted.
+        if (Get-Command msedge -ErrorAction SilentlyContinue) {
+            Start-Process 'msedge' 'edge://favorites/'
+        } else {
+            Start-Process 'edge://favorites/'
+        }
+        return
+    }
 
     if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
         Write-Host "fzf is not installed. Install with: scoop install fzf" -ForegroundColor Yellow
@@ -214,7 +231,9 @@ function Invoke-EdgeBookmark {
         --with-nth=1,2 `
         --preview "echo {3}" `
         --preview-window=down:3:wrap `
-        --prompt="edge-fav> "
+        --header "Enter: open in Edge  |  Ctrl-E: edit links in Edge's favorites manager" `
+        --bind "ctrl-e:execute-silent(start edge://favorites/)+abort" `
+        --prompt="go fav> "
     if (-not $selected) { return }
 
     $url = ($selected -split $tab)[2]
