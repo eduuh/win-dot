@@ -253,22 +253,79 @@ function Invoke-EdgeBookmark {
     }
 }
 
+# ============================================================================
+# Folder sources for `go folder` / `go explorer` / `go all`.
+# Add more paths here, or override via env vars (semicolon-separated):
+#   $env:GO_FOLDER_ROOTS  — each path's immediate children are listed
+#   $env:GO_FOLDER_PINNED — each path itself is included (by its full path)
+# Example:
+#   $env:GO_FOLDER_ROOTS  = "$HOME\projects;$HOME\work;D:\code"
+#   $env:GO_FOLDER_PINNED = "$HOME\.config;$HOME\dotfiles"
+# ============================================================================
+$script:GoFolderRoots  = @(
+    (Join-Path $HOME 'projects')
+)
+$script:GoFolderPinned = @(
+    # (Join-Path $HOME '.config')
+)
+
 function Get-GoProjectFolders {
     <#
     .SYNOPSIS
-        Enumerate one-level directories under $HOME\projects.
+        Enumerate folders for the `go` picker.
     .DESCRIPTION
-        Shared source for `go folder` and `go explorer`. Returns an empty
-        array (with a friendly message) if the projects root does not exist.
+        Returns DirectoryInfo objects sourced from:
+          * $script:GoFolderRoots  — each root's immediate children
+          * $script:GoFolderPinned — each pinned path as-is
+        Env vars $env:GO_FOLDER_ROOTS / $env:GO_FOLDER_PINNED override
+        the script-scope defaults (semicolon-separated). Missing paths
+        are skipped quietly; duplicates are de-duped.
     #>
     [CmdletBinding()]
     param()
-    $root = Join-Path $HOME 'projects'
-    if (-not (Test-Path -LiteralPath $root)) {
-        Write-Host "Projects root not found: $root" -ForegroundColor Yellow
-        return @()
+
+    $roots = if ($env:GO_FOLDER_ROOTS) {
+        $env:GO_FOLDER_ROOTS -split ';' | Where-Object { $_ }
+    } else {
+        $script:GoFolderRoots
     }
-    Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue
+    $pinned = if ($env:GO_FOLDER_PINNED) {
+        $env:GO_FOLDER_PINNED -split ';' | Where-Object { $_ }
+    } else {
+        $script:GoFolderPinned
+    }
+
+    $results = [System.Collections.Generic.List[object]]::new()
+    $seen    = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+
+    foreach ($r in $roots) {
+        if (-not (Test-Path -LiteralPath $r)) {
+            Write-Verbose "Skipping missing root: $r"
+            continue
+        }
+        foreach ($d in (Get-ChildItem -LiteralPath $r -Directory -ErrorAction SilentlyContinue)) {
+            if ($seen.Add($d.FullName)) { $results.Add($d) }
+        }
+    }
+
+    foreach ($p in $pinned) {
+        if (-not (Test-Path -LiteralPath $p)) {
+            Write-Verbose "Skipping missing pinned: $p"
+            continue
+        }
+        $d = Get-Item -LiteralPath $p -ErrorAction SilentlyContinue
+        if ($d -and $d.PSIsContainer -and $seen.Add($d.FullName)) {
+            $results.Add($d)
+        }
+    }
+
+    if ($results.Count -eq 0) {
+        Write-Host "No folders found. Edit `$script:GoFolderRoots in your profile or set `$env:GO_FOLDER_ROOTS." -ForegroundColor Yellow
+        return
+    }
+    foreach ($r in $results) { $r }
 }
 
 function Invoke-GoFolder {
