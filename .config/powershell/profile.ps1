@@ -519,8 +519,19 @@ $script:GoSubcommands = [ordered]@{
     folder   = @{ Handler = 'Invoke-GoFolder';     Description = 'Fuzzy-pick a folder under ~/projects and cd into it' }
     explorer = @{ Handler = 'Invoke-GoExplorer';   Description = 'Fuzzy-pick a folder under ~/projects and open it in Explorer' }
     app      = @{ Handler = 'Invoke-GoApp';        Description = 'Fuzzy-pick a Start Menu app (classic + UWP) and launch it' }
-    cs       = @{ Handler = 'Invoke-GoCodespace';  Description = 'Fuzzy-pick a GitHub Codespace and open it in VS Code' }
+    code     = @{ Handler = 'Invoke-GoCodespace';  Description = 'Fuzzy-pick a GitHub Codespace and open it in VS Code'; Aliases = @('cs') }
     view     = @{ Handler = 'Invoke-GoView';       Description = 'Open a URL in a clean throwaway Edge window (-Window, -Guest, -KeepProfile)' }
+}
+
+function Resolve-GoSubcommand {
+    param([string]$Name)
+    if (-not $Name) { return $null }
+    if ($script:GoSubcommands.Contains($Name)) { return $Name }
+    foreach ($k in $script:GoSubcommands.Keys) {
+        $aliases = $script:GoSubcommands[$k].Aliases
+        if ($aliases -and ($aliases -contains $Name)) { return $k }
+    }
+    return $null
 }
 
 function Show-GoHelp {
@@ -530,8 +541,10 @@ function Show-GoHelp {
     Write-Host ""
     Write-Host "Subcommands:"
     foreach ($k in $script:GoSubcommands.Keys) {
-        $desc = $script:GoSubcommands[$k].Description
-        Write-Host ("  {0,-10} {1}" -f $k, $desc)
+        $entry = $script:GoSubcommands[$k]
+        $label = $k
+        if ($entry.Aliases) { $label = "$k (" + ($entry.Aliases -join ', ') + ')' }
+        Write-Host ("  {0,-14} {1}" -f $label, $entry.Description)
     }
 }
 
@@ -545,7 +558,8 @@ function Invoke-Go {
         go folder       # cd into a project
         go explorer     # open a project folder in Explorer
         go app          # launch a Start Menu app (e.g. Clipchamp)
-        go cs           # open a GitHub Codespace
+        go code         # open a GitHub Codespace (alias: go cs)
+        go view <url>   # open a URL in a clean throwaway Edge window
     #>
     [CmdletBinding()]
     [Alias('go')]
@@ -562,13 +576,14 @@ function Invoke-Go {
         return
     }
 
-    if (-not $script:GoSubcommands.Contains($Subcommand)) {
+    $resolved = Resolve-GoSubcommand $Subcommand
+    if (-not $resolved) {
         Write-Warning "Unknown subcommand '$Subcommand'"
         Show-GoHelp
         return
     }
 
-    $handler = $script:GoSubcommands[$Subcommand].Handler
+    $handler = $script:GoSubcommands[$resolved].Handler
 
     if (-not $Rest -or $Rest.Count -eq 0) {
         & $handler
@@ -614,11 +629,19 @@ function Invoke-Go {
 # the same $script:GoSubcommands map so a new subcommand auto-completes.
 $goCompleter = {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-    $script:GoSubcommands.Keys |
-        Where-Object { $_ -like "$wordToComplete*" } |
+    $entries = foreach ($k in $script:GoSubcommands.Keys) {
+        [pscustomobject]@{ Name = $k; Desc = $script:GoSubcommands[$k].Description }
+        foreach ($a in @($script:GoSubcommands[$k].Aliases)) {
+            if ($a) {
+                [pscustomobject]@{ Name = $a; Desc = "$($script:GoSubcommands[$k].Description) (alias of $k)" }
+            }
+        }
+    }
+    $entries |
+        Where-Object { $_.Name -like "$wordToComplete*" } |
         ForEach-Object {
             [System.Management.Automation.CompletionResult]::new(
-                $_, $_, 'ParameterValue', $script:GoSubcommands[$_].Description
+                $_.Name, $_.Name, 'ParameterValue', $_.Desc
             )
         }
 }
