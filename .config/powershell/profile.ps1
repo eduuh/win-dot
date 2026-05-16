@@ -422,6 +422,96 @@ function Invoke-GoCodespace {
     }
 }
 
+function Invoke-GoView {
+    <#
+    .SYNOPSIS
+        Open a URL in a clean, throwaway Edge window with most features disabled.
+    .DESCRIPTION
+        Useful for "just show me this page" — screenshots, demos, or isolating
+        whether a site is broken by your installed extensions/profile state.
+
+        Defaults:
+          * Chromeless app-style window (no tabs, no address bar)
+          * Throwaway user-data-dir under $env:TEMP (no cookies/history/extensions reused)
+          * Background networking, sync, translate, and shopping/Copilot features off
+
+        Switches:
+          -Window       Full window (tabs + address bar) instead of --app.
+          -Guest        Use Edge guest mode instead of a temp user-data-dir.
+          -KeepProfile  Reuse your default Edge profile (cookies/login persist).
+                        Implies the same feature disables but no isolation.
+    .EXAMPLE
+        go view https://example.com
+    .EXAMPLE
+        go view https://github.com -Window
+    .EXAMPLE
+        go view https://mail.google.com -KeepProfile
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, Position = 0)]
+        [string] $Url,
+        [switch] $Window,
+        [switch] $Guest,
+        [switch] $KeepProfile
+    )
+
+    if ($Url -notmatch '^[a-zA-Z][a-zA-Z0-9+.-]*://') {
+        $Url = "https://$Url"
+    }
+
+    $edge = Get-Command msedge -ErrorAction SilentlyContinue
+    if (-not $edge) {
+        $candidates = @(
+            "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
+            "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+        )
+        $edgePath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if (-not $edgePath) {
+            Write-Host "Could not find msedge.exe on PATH or in Program Files." -ForegroundColor Yellow
+            return
+        }
+    } else {
+        $edgePath = $edge.Source
+    }
+
+    $disabledFeatures = @(
+        'msEdgeShoppingFeatures',
+        'msImplicitSignin',
+        'msSidebar',
+        'msEdgeCopilotPagePromo',
+        'msEdgeBingChatEntry'
+    ) -join ','
+
+    $argList = @(
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-extensions',
+        '--disable-sync',
+        '--disable-translate',
+        '--disable-background-networking',
+        '--disable-background-mode',
+        '--disable-component-update',
+        "--disable-features=$disabledFeatures"
+    )
+
+    if ($Guest) {
+        $argList += '--guest'
+    } elseif (-not $KeepProfile) {
+        $stamp   = [Guid]::NewGuid().ToString('N').Substring(0, 8)
+        $dataDir = Join-Path $env:TEMP "edge-view-$stamp"
+        $argList += "--user-data-dir=$dataDir"
+    }
+
+    if ($Window) {
+        $argList += $Url
+    } else {
+        $argList += "--app=$Url"
+    }
+
+    Start-Process -FilePath $edgePath -ArgumentList $argList | Out-Null
+}
+
 # Single source of truth for `go` subcommands. Adding one is a one-line edit
 # here — the dispatcher, help text, and tab completion all read from this map.
 $script:GoSubcommands = [ordered]@{
@@ -430,6 +520,7 @@ $script:GoSubcommands = [ordered]@{
     explorer = @{ Handler = 'Invoke-GoExplorer';   Description = 'Fuzzy-pick a folder under ~/projects and open it in Explorer' }
     app      = @{ Handler = 'Invoke-GoApp';        Description = 'Fuzzy-pick a Start Menu app (classic + UWP) and launch it' }
     cs       = @{ Handler = 'Invoke-GoCodespace';  Description = 'Fuzzy-pick a GitHub Codespace and open it in VS Code' }
+    view     = @{ Handler = 'Invoke-GoView';       Description = 'Open a URL in a clean throwaway Edge window (-Window, -Guest, -KeepProfile)' }
 }
 
 function Show-GoHelp {
