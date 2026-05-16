@@ -101,6 +101,29 @@ function Install-ScoopPackage($package) {
     }
 }
 
+function Install-NpmGlobal($package) {
+    try {
+        $list = npm ls -g --depth=0 --json 2>$null | ConvertFrom-Json -ErrorAction SilentlyContinue
+        if ($list -and $list.dependencies -and $list.dependencies.PSObject.Properties.Name -contains $package) {
+            Write-Status "$package already installed globally" "Green"
+            return $true
+        }
+        Write-Status "Installing $package globally via npm..."
+        npm install -g $package 2>&1 | Out-Host
+        if ($LASTEXITCODE -eq 0) {
+            Write-Status "Installed $package" "Green"
+            return $true
+        } else {
+            Write-Status "Failed to install $package (exit code: $LASTEXITCODE)" "Yellow"
+            return $false
+        }
+    }
+    catch {
+        Write-Status "Error installing $package`: $_" "Yellow"
+        return $false
+    }
+}
+
 function Install-WingetPackage($package) {
     try {
         Write-Status "Checking $package..."
@@ -277,6 +300,25 @@ try {
 }
 catch {
     Write-Host "Warning: Failed to install PSMUX: $_" -ForegroundColor Yellow
+}
+
+# Global npm packages (requires nodejs-lts from Scoop above)
+Write-Status "Installing global npm packages..."
+if (Get-Command npm -ErrorAction SilentlyContinue) {
+    $npmGlobalPackages = @(
+        "@microsoft/workiq"
+    )
+    $npmFailed = @()
+    foreach ($pkg in $npmGlobalPackages) {
+        if (-not (Install-NpmGlobal $pkg)) {
+            $npmFailed += $pkg
+        }
+    }
+    if ($npmFailed.Count -gt 0) {
+        Write-Status "npm packages failed: $($npmFailed -join ', ')" "Yellow"
+    }
+} else {
+    Write-Status "npm not found on PATH; skipping global npm packages. Open a new shell after Scoop's nodejs-lts install and rerun." "Yellow"
 }
 
 # Setup Neovim configuration
