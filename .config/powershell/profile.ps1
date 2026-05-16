@@ -121,6 +121,322 @@ function d2w {
     & d2 @d2Args
 }
 
+# ============================================================================
+# Description formatters for `go` sources.
+#
+# Each returns an object with a Detail string that is BOTH shown in the
+# picker AND matched by fzf (fzf matches the displayed line). Keep these
+# helpers as the single source of truth for how each source describes itself.
+# ============================================================================
+
+function Format-GoBookmarkDetail {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)] $Bookmark)
+    $bhost = try { ([uri]$Bookmark.Url).Host } catch { '' }
+    $folder = ([string]$Bookmark.Path) -replace '^bookmark_bar/?', ''
+    if (-not $folder) { $folder = '(bar)' }
+    [pscustomobject]@{
+        Folder = $folder
+        Host   = $bhost
+        Detail = if ($bhost) { "$folder  ·  $bhost" } else { $folder }
+    }
+}
+
+function Format-GoAppDetail {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string] $AppId)
+    if ($AppId -match '!') {
+        # UWP / packaged: "Publisher.Name_hash!Entry" -> show "UWP · Publisher.Name"
+        $pkg = ($AppId -split '!', 2)[0] -replace '_[a-z0-9]+$', ''
+        $publisher = ($pkg -split '\.', 2)[0]
+        [pscustomobject]@{
+            Kind      = 'UWP'
+            Publisher = $publisher
+            Detail    = "UWP  ·  $pkg"
+        }
+    } elseif ($AppId -match '\.(lnk|exe)$') {
+        # Classic shortcut/exe path: show "Desktop · file.lnk"
+        [pscustomobject]@{
+            Kind      = 'Desktop'
+            Publisher = ''
+            Detail    = "Desktop  ·  " + [System.IO.Path]::GetFileName($AppId)
+        }
+    } else {
+        # Fallback: ProgIDs (e.g. Microsoft.Office.MSACCESS.EXE.15) and other
+        # classic registrations. Tag as Desktop so every app has a kind.
+        [pscustomobject]@{
+            Kind      = 'Desktop'
+            Publisher = ''
+            Detail    = "Desktop  ·  $AppId"
+        }
+    }
+}
+
+function Format-GoFolderDetail {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string] $FullPath)
+    $parent = Split-Path -Parent $FullPath
+    if ($HOME -and $parent -and $parent.StartsWith($HOME, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $parent = '~' + $parent.Substring($HOME.Length)
+    }
+    [pscustomobject]@{
+        Parent = $parent
+        Detail = $parent
+    }
+}
+
+function Format-GoCodespaceDetail {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)] $Codespace)
+    $repo  = [string]$Codespace.repository
+    $state = [string]$Codespace.state
+    [pscustomobject]@{
+        Repo   = $repo
+        State  = $state
+        Detail = if ($state) { "$repo  ·  $state" } else { $repo }
+    }
+}
+
+# ============================================================================
+# Edge CDP-based deduplication for `go fav` / `go all` (fav items).
+#
+# When Edge is launched with --remote-debugging-port=9222 it exposes a small
+# HTTP+JSON API listing every open tab with its URL. We use that to focus an
+# existing tab instead of opening a duplicate. If the port isn't reachable
+# (Edge not running, or running without the flag), we silently fall back to
+# the normal `msedge <url>` launch — so this is purely additive.
+# ============================================================================
+
+$script:EdgeDebugPort = 9222
+
+function Get-EdgeOpenTabs {
+    [CmdletBinding()]
+    param(
+        [int]$Port = $script:EdgeDebugPort,
+        [int]$TimeoutMs = 400
+    )
+    try {
+        $resp = Invoke-WebRequest -Uri "http://localhost:$Port/json" `
+            -TimeoutSec ([Math]::Max(1, [int]($TimeoutMs / 1000))) `
+            -UseBasicParsing -ErrorAction Stop
+        return @($resp.Content | ConvertFrom-Json) | Where-Object { $_.type -eq 'page' }
+    } catch {
+        return $null
+    }
+}
+
+function Open-EdgeUrl {
+    <#
+    .SYNOPSIS
+        Open a URL in Edge, focusing the existing tab if one is already on it.
+    .DESCRIPTION
+        Requires Edge to be running with --remote-debugging-port=$EdgeDebugPort
+        for dedup to work. Otherwise just opens a new tab as usual.
+        Use Start-EdgeDebug to (re)launch Edge with the flag set.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, Position = 0)][string]$Url,
+        [int]$Port = $script:EdgeDebugPort
+    )
+
+    $tabs = Get-EdgeOpenTabs -Port $Port
+    if ($tabs) {
+        $norm = {
+            param($u)
+            if (-not $u) { return '' }
+            ($u -replace '#.*$', '').TrimEnd('/').ToLowerInvariant()
+        }
+        $target = & $norm $Url
+        $hit = $tabs | Where-Object { (& $norm $_.url) -eq $target } | Select-Object -First 1
+        if ($hit) {
+            try {
+                Invoke-WebRequest -Uri "http://localhost:$Port/json/activate/$($hit.id)" `
+                    -Method Post -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop | Out-Null
+                Write-Verbose "Focused existing Edge tab: $Url"
+                return
+            } catch {
+                Write-Verbose "Tab activate failed, falling back to new tab: $_"
+            }
+        }
+    }
+
+    if (Get-Command msedge -ErrorAction SilentlyContinue) {
+        Start-Process 'msedge' $Url
+    } else {
+        Start-Process $Url
+    }
+}
+
+function Find-EdgeExe {
+    <#
+    .SYNOPSIS
+        Resolve the full path to msedge.exe (PATH, Program Files, x86).
+    #>
+    [CmdletBinding()] param()
+    $cmd = Get-Command msedge -ErrorAction SilentlyContinue
+    $candidates = @(
+        $(if ($cmd) { $cmd.Source }),
+        "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
+        "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+    return $candidates | Select-Object -First 1
+}
+
+function Get-EdgeShortcutRoots {
+    <#
+    .SYNOPSIS
+        Return user-writable folders likely to contain msedge.exe shortcuts.
+    #>
+    [CmdletBinding()] param()
+    @(
+        (Join-Path $env:USERPROFILE 'Desktop'),
+        (Join-Path $env:APPDATA   'Microsoft\Windows\Start Menu\Programs'),
+        (Join-Path $env:APPDATA   'Microsoft\Internet Explorer\Quick Launch'),
+        (Join-Path $env:APPDATA   'Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar')
+    ) | Where-Object { Test-Path -LiteralPath $_ }
+}
+
+function Set-EdgeAlwaysDebug {
+    <#
+    .SYNOPSIS
+        Force Edge to always launch with --remote-debugging-port so `go fav`
+        dedup works without manual setup each session.
+    .DESCRIPTION
+        Idempotent. Two changes:
+          1) HKCU Run-key entry "EdgeDebug" — Edge auto-starts at login with
+             the debug port, hidden via --no-startup-window. Subsequent clicks
+             on any Edge icon reuse this instance, so the port stays enabled
+             for the whole session.
+          2) Patches every user-level Edge .lnk (Desktop, Start Menu, Taskbar
+             pin, Quick Launch) so even after Edge fully exits, the next click
+             relaunches it with the flag.
+
+        System-wide shortcuts under ProgramData are skipped (they would need
+        elevation). Undo with Remove-EdgeAlwaysDebug.
+    .EXAMPLE
+        Set-EdgeAlwaysDebug
+    #>
+    [CmdletBinding()]
+    param([int]$Port = $script:EdgeDebugPort)
+
+    $edgePath = Find-EdgeExe
+    if (-not $edgePath) {
+        Write-Host "msedge.exe not found." -ForegroundColor Yellow
+        return
+    }
+    $flag = "--remote-debugging-port=$Port"
+
+    # 1) HKCU Run-key for silent login auto-launch.
+    $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+    $runVal = '"' + $edgePath + '" ' + $flag + ' --no-startup-window'
+    Set-ItemProperty -Path $runKey -Name 'EdgeDebug' -Value $runVal -Type String
+    Write-Host "[run-key] EdgeDebug = $runVal" -ForegroundColor Green
+
+    # 2) Patch user-level Edge .lnk shortcuts.
+    $wsh = New-Object -ComObject WScript.Shell
+    $patched = 0; $skipped = 0; $errors = 0
+    foreach ($root in (Get-EdgeShortcutRoots)) {
+        Get-ChildItem -LiteralPath $root -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                try {
+                    $sc = $wsh.CreateShortcut($_.FullName)
+                    if ($sc.TargetPath -and (Split-Path -Leaf $sc.TargetPath) -ieq 'msedge.exe') {
+                        if ($sc.Arguments -notmatch [regex]::Escape($flag)) {
+                            $sc.Arguments = if ($sc.Arguments) { "$flag $($sc.Arguments)" } else { $flag }
+                            $sc.Save()
+                            $patched++
+                            Write-Verbose "Patched: $($_.FullName)"
+                        } else {
+                            $skipped++
+                        }
+                    }
+                } catch {
+                    $errors++
+                    Write-Verbose "Skip $($_.FullName): $_"
+                }
+            }
+    }
+    Write-Host "[shortcuts] patched=$patched, already-correct=$skipped, errors=$errors" -ForegroundColor Green
+    Write-Host "Tip: run Start-EdgeDebug -Force to relaunch Edge now with the flag." -ForegroundColor Cyan
+}
+
+function Remove-EdgeAlwaysDebug {
+    <#
+    .SYNOPSIS
+        Reverse Set-EdgeAlwaysDebug: drop Run-key and strip the flag from
+        user-level Edge .lnk shortcuts.
+    #>
+    [CmdletBinding()]
+    param([int]$Port = $script:EdgeDebugPort)
+
+    $flag = "--remote-debugging-port=$Port"
+    $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+    if (Get-ItemProperty -Path $runKey -Name 'EdgeDebug' -ErrorAction SilentlyContinue) {
+        Remove-ItemProperty -Path $runKey -Name 'EdgeDebug' -ErrorAction SilentlyContinue
+        Write-Host "[run-key] removed EdgeDebug" -ForegroundColor Green
+    } else {
+        Write-Host "[run-key] EdgeDebug not present" -ForegroundColor DarkGray
+    }
+
+    $wsh = New-Object -ComObject WScript.Shell
+    $unpatched = 0
+    foreach ($root in (Get-EdgeShortcutRoots)) {
+        Get-ChildItem -LiteralPath $root -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                try {
+                    $sc = $wsh.CreateShortcut($_.FullName)
+                    if ($sc.TargetPath -and (Split-Path -Leaf $sc.TargetPath) -ieq 'msedge.exe') {
+                        if ($sc.Arguments -match [regex]::Escape($flag)) {
+                            $sc.Arguments = ($sc.Arguments -replace ('\s*' + [regex]::Escape($flag) + '\s*'), ' ').Trim()
+                            $sc.Save()
+                            $unpatched++
+                        }
+                    }
+                } catch { }
+            }
+    }
+    Write-Host "[shortcuts] unpatched=$unpatched" -ForegroundColor Green
+}
+
+function Start-EdgeDebug {
+    <#
+    .SYNOPSIS
+        Launch (or relaunch) Edge with --remote-debugging-port so `go fav`
+        can dedupe URLs against open tabs.
+    .DESCRIPTION
+        If Edge is already running, prompts to close it first (CDP only works
+        if every Edge process was started with the flag). Use -Force to skip
+        the prompt.
+    .EXAMPLE
+        Start-EdgeDebug
+    .EXAMPLE
+        Start-EdgeDebug -Force
+    #>
+    [CmdletBinding()]
+    param(
+        [int]$Port = $script:EdgeDebugPort,
+        [switch]$Force
+    )
+    $edge = Get-Process msedge -ErrorAction SilentlyContinue
+    if ($edge) {
+        if (-not $Force) {
+            Write-Host "Edge is already running. Restarting it is required so the debug port is enabled." -ForegroundColor Yellow
+            $ans = Read-Host "Close all Edge windows and relaunch with --remote-debugging-port=$Port? [y/N]"
+            if ($ans -notmatch '^[yY]') {
+                Write-Host "Aborted. `go fav` will still work, but won't dedup against existing tabs." -ForegroundColor Yellow
+                return
+            }
+        }
+        $edge | ForEach-Object {
+            try { $_ | Stop-Process -Force -ErrorAction Stop } catch { }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    Start-Process 'msedge' @('--remote-debugging-port=' + $Port)
+    Write-Host "Edge launched with --remote-debugging-port=$Port. `go fav` will now dedup against open tabs." -ForegroundColor Green
+}
+
 function Invoke-EdgeBookmark {
     <#
     .SYNOPSIS
@@ -132,6 +448,10 @@ function Invoke-EdgeBookmark {
         and pipes the result through fzf. The selected bookmark is
         opened in Edge — or, with switches, copied to the clipboard,
         returned to the pipeline, or just listed.
+
+        If Edge is running with --remote-debugging-port=$EdgeDebugPort
+        (set up via Start-EdgeDebug), an already-open tab on the same URL
+        is focused instead of being duplicated.
 
     .EXAMPLE
         go fav                         # pick + open in Edge
@@ -218,25 +538,30 @@ function Invoke-EdgeBookmark {
 
     if ($List) { return $items }
 
-    # Tab-separated columns: Name<TAB>Path<TAB>URL. Strip embedded tabs/newlines
-    # so fzf's field splitting stays sane.
+    # Tab-separated columns: Name<TAB>Folder<TAB>Host<TAB>URL. Strip embedded
+    # tabs/newlines so fzf's field splitting stays sane. fzf displays cols 1-3
+    # so name, folder, and host are all searchable; URL is preview/payload.
     $clean = { param($s) ($s -replace "[`t`r`n]", ' ') }
     $tab   = [char]9
     $lines = foreach ($it in $items) {
-        (& $clean $it.Name) + $tab + (& $clean $it.Path) + $tab + (& $clean $it.Url)
+        $fmt = Format-GoBookmarkDetail -Bookmark $it
+        (& $clean $it.Name) + $tab +
+        (& $clean $fmt.Folder) + $tab +
+        (& $clean $fmt.Host) + $tab +
+        (& $clean $it.Url)
     }
 
     $selected = $lines | & fzf `
         --delimiter $tab `
-        --with-nth=1,2 `
-        --preview "echo {3}" `
+        --with-nth=1,2,3 `
+        --preview "echo {4}" `
         --preview-window=down:3:wrap `
         --header "Enter: open in Edge  |  Ctrl-E: edit links in Edge's favorites manager" `
         --bind "ctrl-e:execute-silent(start edge://favorites/)+abort" `
         --prompt="go fav> "
     if (-not $selected) { return }
 
-    $url = ($selected -split $tab)[2]
+    $url = ($selected -split $tab)[3]
     if (-not $url) { return }
 
     if ($CopyUrl)  {
@@ -246,11 +571,7 @@ function Invoke-EdgeBookmark {
     }
     if ($PrintUrl) { return $url }
 
-    if (Get-Command msedge -ErrorAction SilentlyContinue) {
-        Start-Process 'msedge' $url
-    } else {
-        Start-Process $url
-    }
+    Open-EdgeUrl -Url $url
 }
 
 # ============================================================================
@@ -347,16 +668,21 @@ function Invoke-GoFolder {
     $folders = @(Get-GoProjectFolders)
     if (-not $folders -or $folders.Count -eq 0) { return }
     $tab = [char]9
-    $lines = $folders | ForEach-Object { $_.Name + $tab + $_.FullName }
+    # Columns: Name<TAB>Parent<TAB>FullPath. fzf shows Name + Parent (both
+    # searchable); FullPath is the hidden action payload.
+    $lines = $folders | ForEach-Object {
+        $parent = (Format-GoFolderDetail -FullPath $_.FullName).Parent
+        $_.Name + $tab + $parent + $tab + $_.FullName
+    }
     $selected = $lines | & fzf `
         --delimiter $tab `
-        --with-nth=1 `
+        --with-nth=1,2 `
         --prompt='go folder> ' `
         --header 'Enter: cd  |  Ctrl-Y: copy path  |  Ctrl-O: Explorer' `
-        --bind 'ctrl-y:execute-silent(echo {2}| clip)+abort' `
-        --bind 'ctrl-o:execute-silent(start "" "{2}")+abort'
+        --bind 'ctrl-y:execute-silent(echo {3}| clip)+abort' `
+        --bind 'ctrl-o:execute-silent(start "" "{3}")+abort'
     if (-not $selected) { return }
-    $path = ($selected -split $tab)[1]
+    $path = ($selected -split $tab)[2]
     if (-not $path) { return }
     if ($CopyPath) {
         Set-Clipboard -Value $path
@@ -376,15 +702,18 @@ function Invoke-GoExplorer {
     $folders = @(Get-GoProjectFolders)
     if (-not $folders -or $folders.Count -eq 0) { return }
     $tab = [char]9
-    $lines = $folders | ForEach-Object { $_.Name + $tab + $_.FullName }
+    $lines = $folders | ForEach-Object {
+        $parent = (Format-GoFolderDetail -FullPath $_.FullName).Parent
+        $_.Name + $tab + $parent + $tab + $_.FullName
+    }
     $selected = $lines | & fzf `
         --delimiter $tab `
-        --with-nth=1 `
+        --with-nth=1,2 `
         --prompt='go explorer> ' `
         --header 'Enter: open in Explorer  |  Ctrl-Y: copy path' `
-        --bind 'ctrl-y:execute-silent(echo {2}| clip)+abort'
+        --bind 'ctrl-y:execute-silent(echo {3}| clip)+abort'
     if (-not $selected) { return }
-    $path = ($selected -split $tab)[1]
+    $path = ($selected -split $tab)[2]
     if ($path) { Start-Process explorer.exe -ArgumentList $path }
 }
 
@@ -417,15 +746,22 @@ function Invoke-GoApp {
     }
     $tab    = [char]9
     $clean  = { param($s) ([string]$s -replace "[`t`r`n]", ' ') }
-    $lines  = foreach ($a in $apps) { (& $clean $a.Name) + $tab + (& $clean $a.AppID) }
+    # Columns: Name<TAB>Detail<TAB>AppID. fzf shows + searches cols 1-2 so
+    # users can type either the app name or publisher/package. AppID is the
+    # hidden launch payload (Ctrl-Y copies it).
+    $lines  = foreach ($a in $apps) {
+        $appId = [string]$a.AppID
+        $detail = (Format-GoAppDetail -AppId $appId).Detail
+        (& $clean $a.Name) + $tab + (& $clean $detail) + $tab + (& $clean $appId)
+    }
     $selected = $lines | & fzf `
         --delimiter $tab `
-        --with-nth=1 `
+        --with-nth=1,2 `
         --prompt='go app> ' `
         --header 'Enter: launch  |  Ctrl-Y: copy AppID' `
-        --bind 'ctrl-y:execute-silent(echo {2}| clip)+abort'
+        --bind 'ctrl-y:execute-silent(echo {3}| clip)+abort'
     if (-not $selected) { return }
-    $appId = ($selected -split $tab)[1]
+    $appId = ($selected -split $tab)[2]
     if ($appId) { Start-Process "shell:AppsFolder\$appId" }
 }
 
@@ -495,10 +831,14 @@ function Invoke-GoCodespace {
 
     $tab   = [char]9
     $clean = { param($s) ([string]$s -replace "[`t`r`n]", ' ') }
+    # Columns: Name<TAB>Detail (repo · state). fzf shows Detail first because
+    # codespace names are usually opaque hashes, then the name for context.
+    # Search hits both columns.
     $lines = foreach ($c in $cs) {
-        (& $clean $c.name) + $tab + (& $clean $c.repository) + $tab + (& $clean $c.state)
+        $detail = (Format-GoCodespaceDetail -Codespace $c).Detail
+        (& $clean $c.name) + $tab + (& $clean $detail)
     }
-    $selected = $lines | & fzf --delimiter $tab --with-nth=2,3,1 --prompt='go cs> '
+    $selected = $lines | & fzf --delimiter $tab --with-nth=2,1 --prompt='go cs> '
     if (-not $selected) { return }
     $name = ($selected -split $tab)[0]
     if (-not $name) { return }
@@ -617,23 +957,27 @@ function Get-GoAllItems {
 
     if (Get-Command Get-StartApps -ErrorAction SilentlyContinue) {
         foreach ($a in (Get-StartApps)) {
+            $appId  = [string]$a.AppID
+            $detail = (Format-GoAppDetail -AppId $appId).Detail
             $items.Add([pscustomobject]@{
-                Type = 'app'; Label = [string]$a.Name; Detail = ''; Data = [string]$a.AppID
+                Type = 'app'; Label = [string]$a.Name; Detail = $detail; Data = $appId
             })
         }
     }
 
     foreach ($f in (Get-GoProjectFolders)) {
+        $detail = (Format-GoFolderDetail -FullPath $f.FullName).Detail
         $items.Add([pscustomobject]@{
-            Type = 'folder'; Label = $f.Name; Detail = $f.FullName; Data = $f.FullName
+            Type = 'folder'; Label = $f.Name; Detail = $detail; Data = $f.FullName
         })
     }
 
     try {
         $bookmarks = Invoke-EdgeBookmark -List
         foreach ($b in $bookmarks) {
+            $detail = (Format-GoBookmarkDetail -Bookmark $b).Detail
             $items.Add([pscustomobject]@{
-                Type = 'fav'; Label = [string]$b.Name; Detail = [string]$b.Url; Data = [string]$b.Url
+                Type = 'fav'; Label = [string]$b.Name; Detail = $detail; Data = [string]$b.Url
             })
         }
     } catch {
@@ -645,10 +989,11 @@ function Get-GoAllItems {
         if ($LASTEXITCODE -eq 0 -and $json) {
             try {
                 foreach ($c in ($json | ConvertFrom-Json)) {
+                    $detail = (Format-GoCodespaceDetail -Codespace $c).Detail
                     $items.Add([pscustomobject]@{
                         Type   = 'code'
                         Label  = [string]$c.name
-                        Detail = "$($c.repository) · $($c.state)"
+                        Detail = $detail
                         Data   = [string]$c.name
                     })
                 }
@@ -680,13 +1025,7 @@ function Invoke-GoItem {
         }
         'app'    { Start-Process "shell:AppsFolder\$($Item.Data)" }
         'folder' { Set-Location -LiteralPath $Item.Data }
-        'fav'    {
-            if (Get-Command msedge -ErrorAction SilentlyContinue) {
-                Start-Process msedge $Item.Data
-            } else {
-                Start-Process $Item.Data
-            }
-        }
+        'fav'    { Open-EdgeUrl -Url $Item.Data }
         default  { Write-Warning "Unknown item type: $($Item.Type)" }
     }
 }
@@ -721,6 +1060,7 @@ function Invoke-GoAll {
 
     $tab    = [char]9
     $reset  = "`e[0m"
+    $dim    = "`e[2m"
     $colors = @{
         'code'   = "`e[32m"
         'app'    = "`e[36m"
@@ -729,18 +1069,44 @@ function Invoke-GoAll {
     }
     $clean = { param($s) ([string]$s -replace "[`t`r`n]", ' ') }
 
-    # Index each item so we can recover the exact record after fzf returns,
+    # Pre-clean labels/details so we can measure widths accurately.
+    $rows = for ($i = 0; $i -lt $items.Count; $i++) {
+        $it = $items[$i]
+        [pscustomobject]@{
+            Index  = $i
+            Type   = $it.Type
+            Label  = & $clean $it.Label
+            Detail = & $clean $it.Detail
+            Data   = & $clean $it.Data
+        }
+    }
+
+    # Compute label column width, capped at 40 to avoid runaway lines.
+    $maxLabel = 40
+    $labelWidth = ($rows | ForEach-Object { $_.Label.Length } |
+        Measure-Object -Maximum).Maximum
+    if ($labelWidth -gt $maxLabel) { $labelWidth = $maxLabel }
+    if (-not $labelWidth) { $labelWidth = 0 }
+
+    # Index each row so we can recover the exact record after fzf returns,
     # regardless of any quoting hazards in Data. Hidden 5th column carries
     # the raw Data so Ctrl-Y can yank it into the clipboard via clip.exe.
-    $lines = for ($i = 0; $i -lt $items.Count; $i++) {
-        $it       = $items[$i]
-        $color    = $colors[$it.Type]
+    # Padding is applied to the bare text before ANSI wrapping so widths
+    # remain accurate (ANSI sequences don't count as visible characters).
+    $lines = foreach ($r in $rows) {
+        $color   = $colors[$r.Type]
         if (-not $color) { $color = '' }
-        $typeCol  = "$color$($it.Type.PadRight(6))$reset"
-        $label    = & $clean $it.Label
-        $detail   = & $clean $it.Detail
-        $data     = & $clean $it.Data
-        $typeCol + $tab + $label + $tab + $detail + $tab + $i + $tab + $data
+        $typeCol = "$color$($r.Type.PadRight(6))$reset"
+
+        $label = $r.Label
+        if ($label.Length -gt $labelWidth) {
+            $label = $label.Substring(0, [Math]::Max(0, $labelWidth - 1)) + '…'
+        }
+        $labelCol = $label.PadRight($labelWidth)
+
+        $detailCol = if ($r.Detail) { "$dim$($r.Detail)$reset" } else { '' }
+
+        $typeCol + $tab + $labelCol + $tab + $detailCol + $tab + $r.Index + $tab + $r.Data
     }
 
     $selected = $lines | & fzf `
