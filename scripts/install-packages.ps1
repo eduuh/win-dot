@@ -165,14 +165,8 @@ catch {
 
 Write-Status "Installing Scoop packages..."
 $scoopPackages = @(
-    "extras/obsidian","main/neovim","main/helix",
-    "git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship", "d2",
-    # Helix language tooling (mirrors ~/.config/nvim mason + conform setup)
-    "main/llvm",                         # clangd + clang-format
-    "main/shfmt",                        # bash formatter
-    "main/stylua",                       # lua formatter
-    "extras/lua-language-server",        # lua LSP
-    "extras/marksman"                    # markdown LSP
+    "extras/obsidian","main/neovim",
+    "git", "nodejs-lts", "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship", "d2"
 )
 $scoopFailed = @()
 foreach ($tool in $scoopPackages) {
@@ -181,53 +175,23 @@ foreach ($tool in $scoopPackages) {
     }
 }
 
-# Helix LSPs + formatters that live in npm / pip rather than scoop.
-# These mirror mason-tool-installer + conform.nvim in ~/.config/nvim.
-function Install-NpmGlobal($pkg) {
-    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-        Write-Status "npm not on PATH, skipping $pkg" "Yellow"
-        return
-    }
-    $list = & npm list -g --depth=0 2>$null | Out-String
-    if ($list -match [regex]::Escape($pkg)) {
-        Write-Status "$pkg (npm global) already installed" "Green"
-        return
-    }
-    Write-Status "Installing $pkg (npm global)..."
-    & npm install -g $pkg *>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Status "Installed $pkg" "Green"
-    } else {
-        Write-Status "Failed to install $pkg (exit $LASTEXITCODE)" "Yellow"
-    }
+# Helix is configured by a sibling repo (eduuh/hx) which knows how to install
+# helix itself plus all its LSPs / formatters. Clone it (or pull) and run
+# its installer; this keeps helix config portable to Linux / macOS too.
+Write-Status "Setting up Helix via eduuh/hx..."
+$hxRepoDir = Join-Path $HOME 'projects\hx'
+if (-not (Test-Path (Join-Path $hxRepoDir '.git'))) {
+    New-Item -ItemType Directory -Path (Split-Path -Parent $hxRepoDir) -Force | Out-Null
+    git clone https://github.com/eduuh/hx.git $hxRepoDir
+} else {
+    Write-Status "hx already cloned; pulling latest..." "DarkGray"
+    git -C $hxRepoDir pull --ff-only 2>&1 | Out-Null
 }
-
-function Install-PipUser($pkg) {
-    if (-not (Get-Command pip -ErrorAction SilentlyContinue)) {
-        Write-Status "pip not on PATH, skipping $pkg" "Yellow"
-        return
-    }
-    $show = & pip show $pkg 2>$null
-    if ($show) {
-        Write-Status "$pkg (pip) already installed" "Green"
-        return
-    }
-    Write-Status "Installing $pkg (pip --user)..."
-    & pip install --user --quiet $pkg
-    if ($LASTEXITCODE -eq 0) {
-        Write-Status "Installed $pkg" "Green"
-    } else {
-        Write-Status "Failed to install $pkg (exit $LASTEXITCODE)" "Yellow"
-    }
-}
-
-Write-Status "Installing Helix LSPs / formatters (npm + pip)..."
-foreach ($p in @("typescript", "typescript-language-server", "bash-language-server",
-                  "prettier", "@fsouza/prettierd", "vscode-langservers-extracted")) {
-    Install-NpmGlobal $p
-}
-foreach ($p in @("black", "isort", "python-lsp-server")) {
-    Install-PipUser $p
+$hxInstaller = Join-Path $hxRepoDir 'install.ps1'
+if (Test-Path $hxInstaller) {
+    & $hxInstaller
+} else {
+    Write-Status "hx/install.ps1 not found after clone — skipping" "Yellow"
 }
 
 # Winget Packages

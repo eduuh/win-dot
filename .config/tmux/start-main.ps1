@@ -1,8 +1,9 @@
 # Bootstrap or attach the default psmux session.
 #
 # Layout:
-#   window 1: notes  (helix on ~/projects/branch-notes-work)
-#   window 2: htop   (btop4win running in the foreground)
+#   window 1: notes     (helix on ~/projects/branch-notes-work)
+#   window 2: personal  (helix on ~/projects/personal-notes)
+#   window 3: htop      (btop4win running in the foreground)
 #
 # Idempotent: if the session already exists we just attach.
 
@@ -21,23 +22,40 @@ if (-not $psmux) {
 $hx   = (Get-Command hx   -ErrorAction SilentlyContinue).Source
 $btop = (Get-Command btop -ErrorAction SilentlyContinue).Source
 
-# --- Where work branch-notes live ----------------------------------------
-$notesDir = Join-Path $HOME "projects\branch-notes-work"
+# --- Where notes live -----------------------------------------------------
+$workNotesDir     = Join-Path $HOME "projects\branch-notes-work"
+$personalNotesDir = Join-Path $HOME "projects\personal-notes"
+
+# Helper: helix on a dir if both exist, else a plain shell.
+function New-NotesWindow {
+    param([string]$WinName, [string]$Dir, [bool]$IsFirst)
+
+    $argsBase = if ($IsFirst) { @('new-session', '-d', '-s', $Name) } else { @('new-window', '-t', "${Name}:") }
+
+    if ($hx -and (Test-Path $Dir)) {
+        & $psmux @argsBase -n $WinName -c $Dir $hx "."
+    } else {
+        if (-not $hx) { Write-Host "helix not found; '$WinName' window will be a plain shell." -ForegroundColor Yellow }
+        if (-not (Test-Path $Dir)) { Write-Host "notes dir missing ($Dir); '$WinName' window will be a plain shell." -ForegroundColor Yellow }
+        if ($IsFirst) {
+            & $psmux @argsBase -n $WinName
+        } else {
+            & $psmux @argsBase -n $WinName -c $HOME
+        }
+    }
+}
 
 # --- Create session if missing --------------------------------------------
 & $psmux has-session -t $Name 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) {
 
-    # Window 1: notes — helix on work branch-notes if both exist, else shell.
-    if ($hx -and (Test-Path $notesDir)) {
-        & $psmux new-session -d -s $Name -n notes -c $notesDir $hx "."
-    } else {
-        if (-not $hx)   { Write-Host "helix not found; window 1 will be a plain shell." -ForegroundColor Yellow }
-        if (-not (Test-Path $notesDir)) { Write-Host "branch-notes dir missing ($notesDir); window 1 will be a plain shell." -ForegroundColor Yellow }
-        & $psmux new-session -d -s $Name -n notes
-    }
+    # Window 1: notes (work)
+    New-NotesWindow -WinName 'notes'    -Dir $workNotesDir     -IsFirst $true
 
-    # Window 2: htop — only if btop is available.
+    # Window 2: personal notes
+    New-NotesWindow -WinName 'personal' -Dir $personalNotesDir -IsFirst $false
+
+    # Window 3: htop — only if btop is available.
     if ($btop) {
         & $psmux new-window -t "${Name}:" -n htop $btop
     }
@@ -48,4 +66,5 @@ if ($LASTEXITCODE -ne 0) {
 
 # --- Attach ---------------------------------------------------------------
 & $psmux attach -t $Name
+
 

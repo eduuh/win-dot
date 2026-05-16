@@ -41,14 +41,15 @@ Both are gitignored. Use them for work identities, tenant IDs, anything you don'
 
 ```text
 .config/powershell/profile.ps1    # canonical pwsh profile (THE source of truth)
-.config/tmux/start-main.ps1       # psmux session launcher
+.config/tmux/start-main.ps1       # psmux session launcher (notes / personal / htop)
 .gitconfig                         # global git; [include]s ~/.gitconfig.local
 .tmux.conf                         # psmux config (WSL parity)
-AppData/Roaming/helix/             # helix config.toml + languages.toml (ported from ~/.config/nvim)
 AppData/.../settings.json          # Windows Terminal: powershell-tmux + ubuntu-wsl
 scripts/                           # run.ps1, win.ps1, gh.ps1, install-packages.ps1, …
 docs/architecture.md               # the why
 ```
+
+Helix config lives in its own repo: [eduuh/hx](https://github.com/eduuh/hx). The bootstrap clones it to `~/projects/hx` and runs `install.ps1` from there, so the same config works on Linux / macOS too.
 
 PowerShell `$PROFILE` files are deliberately not tracked — their path depends on OneDrive KFM and the pwsh host. The installer writes a stub at runtime instead.
 

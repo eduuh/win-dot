@@ -256,26 +256,21 @@ Test-Case 'tracked Terminal settings.json matches live settings.json' {
     $a.Hash.Substring(0,12)
 }
 
+Test-Case 'eduuh/hx repo cloned at ~/projects/hx' {
+    $hx = Join-Path $HOME 'projects\hx\.git'
+    if (-not (Test-Path $hx)) { throw "~/projects/hx not cloned" }
+    $remote = & git -C "$HOME\projects\hx" remote get-url origin 2>&1
+    if ($remote -notmatch 'eduuh/hx') { throw "remote does not point at eduuh/hx: $remote" }
+    $remote
+}
+
 Test-Case 'helix config.toml and languages.toml load (hx --health)' {
     if (-not (Get-Command hx -ErrorAction SilentlyContinue)) { throw "hx not on PATH" }
     $health = & hx --health 2>&1 | Out-String
     if ($health -notmatch 'Config file:\s+\S') { throw "hx --health missing Config file line" }
-    if ($health -match 'Config file:\s+default') { throw "hx is using default config; tracked config.toml not picked up" }
+    if ($health -match 'Config file:\s+default') { throw "hx is using default config; eduuh/hx install.ps1 not run" }
     if ($health -match 'Language file:\s+default') { throw "hx is using default languages.toml" }
-    'config + languages picked up'
-}
-
-Test-Case 'tracked helix config matches live AppData/Roaming/helix' {
-    foreach ($name in 'config.toml','languages.toml') {
-        $live = Join-Path "$HOME\AppData\Roaming\helix" $name
-        $tracked = Join-Path "$HOME\projects\win-dot\AppData\Roaming\helix" $name
-        if (-not (Test-Path $live)) { throw "missing live $name" }
-        if (-not (Test-Path $tracked)) { throw "missing tracked $name" }
-        $a = Get-FileHash $live -Algorithm SHA256
-        $b = Get-FileHash $tracked -Algorithm SHA256
-        if ($a.Hash -ne $b.Hash) { throw "$name hashes differ" }
-    }
-    'config.toml + languages.toml in sync'
+    'config + languages picked up from eduuh/hx'
 }
 
 # ---------------------------------------------------------------------------
