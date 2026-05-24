@@ -13,14 +13,16 @@
 
 # GitHub CLI credential helper (Windows install path)
 [credential "https://github.com"]
-	helper =
-	helper = !'C:/Program Files/GitHub CLI/gh.exe' auth git-credential
+	helper = 
+	helper = !'C:\\Program Files\\GitHub CLI\\gh.exe' auth git-credential
 
 [credential "https://gist.github.com"]
-	helper =
-	helper = !'C:/Program Files/GitHub CLI/gh.exe' auth git-credential
+	helper = 
+	helper = !'C:\\Program Files\\GitHub CLI\\gh.exe' auth git-credential
 
 # Per-machine private overrides (work identity, Azure DevOps creds, tenant IDs).
 # Kept untracked; create ~/.gitconfig.local on each machine that needs it.
 [include]
 	path = ~/.gitconfig.local
+[credential "azrepos:org/office"]
+	azureAuthority = https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47

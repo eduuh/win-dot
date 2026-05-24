@@ -4,6 +4,9 @@
 #   window 1: notes     (helix on ~/projects/branch-notes-work)
 #   window 2: personal  (helix on ~/projects/personal-notes)
 #   window 3: htop      (btop4win running in the foreground)
+#   window 4: shell     (plain prompt in branch-notes-work)
+#   window 5: git       (lazygit on branch-notes-work, shell fallback)
+#   window 6: scratch   (plain prompt in $HOME)
 #
 # Idempotent: if the session already exists we just attach.
 
@@ -59,6 +62,21 @@ if ($LASTEXITCODE -ne 0) {
     if ($btop) {
         & $psmux new-window -t "${Name}:" -n htop $btop
     }
+
+    # Window 4: shell in work notes — plain prompt for ad-hoc commands.
+    & $psmux new-window -t "${Name}:" -n shell -c $workNotesDir
+
+    # Window 5: lazygit on work notes — shell fallback if lazygit missing.
+    $lg = (Get-Command lazygit -ErrorAction SilentlyContinue).Source
+    if ($lg) {
+        & $psmux new-window -t "${Name}:" -n git -c $workNotesDir $lg
+    } else {
+        Write-Host "lazygit not found; 'git' window will be a plain shell." -ForegroundColor Yellow
+        & $psmux new-window -t "${Name}:" -n git -c $workNotesDir
+    }
+
+    # Window 6: scratch shell at $HOME.
+    & $psmux new-window -t "${Name}:" -n scratch -c $HOME
 
     # Land on the notes window when we attach.
     & $psmux select-window -t "${Name}:notes" 2>&1 | Out-Null

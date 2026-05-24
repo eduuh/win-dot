@@ -4,10 +4,10 @@
   "editor.acceptSuggestionOnCommitCharacter": false,
   "editor.acceptSuggestionOnEnter": "off",
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "editor.minimap.enabled": false,
   "editor.fontFamily": "Cascadia Mono",
@@ -41,7 +41,7 @@
   "editor.snippetSuggestions": "bottom",
   "window.title": " ",
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "typescript.updateImportsOnFileMove.enabled": "always",
   "github.copilot.selectedCompletionModel": "",
@@ -56,7 +56,7 @@
     "NUMPAD",
     "RALT",
     "RCTRL",
-    "RSHF"
+    "RSHF",
   ],
   "javascript.suggest.includeAutomaticOptionalChainCompletions": false,
   "javascript.suggest.includeCompletionsForImportStatements": false,
@@ -73,19 +73,23 @@
   "editor.autoClosingQuotes": "never",
   "editor.autoSurround": "never",
   "diffEditor.ignoreTrimWhitespace": false,
-  "workbench.sideBar.location": "right",
   "[yaml]": {
-    "editor.defaultFormatter": "redhat.vscode-yaml"
+    "editor.defaultFormatter": "redhat.vscode-yaml",
   },
   "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "workbench.statusBar.visible": false,
   "workbench.tree.renderIndentGuides": "none",
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "window.customTitleBarVisibility": "never",
   "chat.agent.maxRequests": 2000,
-  "workbench.colorTheme": "Kimbie Dark"
+  "workbench.colorTheme": "Kimbie Dark",
+  "typescript.tsserver.log": "/tmp/tsgo-server-logs",
+  "typescript.experimental.useTsgo": true,
+  "redhat.telemetry.enabled": true,
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
 }
