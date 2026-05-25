@@ -15,11 +15,11 @@ Write-Host "Installing packages..."
 
 # Install keyboard if requested
 if ($InstallKeyboard) {
-    Write-Host "Installing Capsicain keyboard..."
+    Write-Host "Installing Keyflow keyboard..."
     & "$PSScriptRoot\install-keyboard.ps1"
 }
 else {
-    Write-Host "Skipping Capsicain keyboard installation. To install later, run with --installkeyboard flag."
+    Write-Host "Skipping Keyflow keyboard installation. To install later, run with -InstallKeyboard flag."
 }
 
 Write-Host "✅ Setup complete. Restart your terminal."
