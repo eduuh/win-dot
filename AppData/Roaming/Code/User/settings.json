@@ -86,10 +86,12 @@
   },
   "window.customTitleBarVisibility": "never",
   "chat.agent.maxRequests": 2000,
-  "workbench.colorTheme": "Kimbie Dark",
+  "workbench.colorTheme": "D2 Dark",
   "typescript.tsserver.log": "/tmp/tsgo-server-logs",
   "typescript.experimental.useTsgo": true,
   "redhat.telemetry.enabled": true,
   "gitlens.ai.model": "vscode",
   "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  "typescript.tsserver.nodePath": "node",
+  "chat.viewSessions.orientation": "stacked",
 }

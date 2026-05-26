@@ -28,8 +28,8 @@
   ],
   "copyFormatting": "none",
   "copyOnSelect": true,
-  "defaultProfile": "{c0ffee01-d2c0-4e8a-b1a7-7373731ad510}",
-  "startupActions": "; new-tab --profile \"ubuntu-wsl\"",
+  "defaultProfile": "{4ff56d04-d9cf-57ea-bae2-ad396374e7e3}",
+  "startupActions": "new-tab --title tmux -p ubuntu-wsl wsl.exe ~ -d Ubuntu-22.04 -- tmux new-session -A -s main ; new-tab --title pwsh -p \"PowerShell\" ; focus-tab --target 0",
   "launchMode": "focus",
   "showTerminalTitleInTitlebar": false,
   "showTabsInTitlebar": false,
@@ -67,10 +67,10 @@
     "list": [
       {
         "guid": "{c0ffee01-d2c0-4e8a-b1a7-7373731ad510}",
-        "name": "powershell-tmux",
-        "tabTitle": "drive",
-        "commandline": "pwsh.exe -NoLogo -NoExit -File \"%USERPROFILE%\\.config\\tmux\\start-main.ps1\"",
-        "startingDirectory": "%USERPROFILE%\\projects",
+        "name": "notes",
+        "tabTitle": "notes",
+        "commandline": "pwsh.exe -NoLogo -NoExit -Command \"hx .\"",
+        "startingDirectory": "%USERPROFILE%\\projects\\branch-notes-work",
         "hidden": false,
         "icon": "ms-appx:///ProfileIcons/pwsh.png"
       },
