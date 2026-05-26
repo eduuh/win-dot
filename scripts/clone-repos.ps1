@@ -9,7 +9,8 @@ $GitHubUser = "eduuh"
 $Repositories = @(
     "win-dot",
     "personal-notes",
-    "capsicain"
+    "capsicain",
+    "keyflow"
 )
 
 function Write-Status($msg, $color = "Cyan") {
