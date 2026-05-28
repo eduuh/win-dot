@@ -177,19 +177,22 @@ keybindings:
   - commands: ["move --workspace 4", "focus --workspace 4"]
     bindings: ["alt+shift+l"]
 
-  # Workspace switching: rshift as meta + numpad + control+N
+  # Workspace switching: rshift as meta + numpad + control+N + control+navcluster
+  # Nav cluster layout mirrors numpad 1-6 (two rows of three):
+  #   ctrl+page_up(1)  ctrl+up(2)    ctrl+page_down(3)
+  #   ctrl+left(4)     ctrl+down(5)  ctrl+right(6)
   - commands: ["focus --workspace 1", "focus --workspace 1"]
-    bindings: ["rshift+1", "numpad1", "control+1"]
+    bindings: ["rshift+1", "numpad1", "control+1", "control+page_up"]
   - commands: ["focus --workspace 2", "focus --workspace 2"]
-    bindings: ["rshift+2", "numpad2", "control+2"]
+    bindings: ["rshift+2", "numpad2", "control+2", "control+up"]
   - commands: ["focus --workspace 3", "focus --workspace 3"]
-    bindings: ["rshift+3", "numpad3", "control+3"]
+    bindings: ["rshift+3", "numpad3", "control+3", "control+page_down"]
   - commands: ["focus --workspace 4", "focus --workspace 4"]
-    bindings: ["rshift+4", "numpad4", "control+4"]
+    bindings: ["rshift+4", "numpad4", "control+4", "control+left"]
   - commands: ["focus --workspace 5", "focus --workspace 5"]
-    bindings: ["rshift+5", "numpad5", "control+5"]
+    bindings: ["rshift+5", "numpad5", "control+5", "control+down"]
   - commands: ["focus --workspace 6", "focus --workspace 6"]
-    bindings: ["rshift+6", "numpad6", "control+6"]
+    bindings: ["rshift+6", "numpad6", "control+6", "control+right"]
   - commands: ["focus --workspace 7", "focus --workspace 7"]
     bindings: ["rshift+7", "numpad7", "control+7"]
   - commands: ["focus --workspace 8", "focus --workspace 8"]
