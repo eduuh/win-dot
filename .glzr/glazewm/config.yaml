@@ -1,7 +1,13 @@
 general:
   config_reload_commands: []
 
-  startup_commands: []
+  startup_commands:
+    - "shell-exec wt"
+    - "shell-exec C:\\PROGRA~2\\MICROS~1\\Edge\\APPLIC~1\\msedge.exe"
+    - "shell-exec code"
+    - "shell-exec explorer.exe shell:AppsFolder\\MicrosoftCorporationII.Windows365_8wekyb3d8bbwe!Windows365"
+    - "shell-exec explorer.exe shell:AppsFolder\\SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify"
+    - "focus --workspace 1"
 
   shutdown_commands: []
 
@@ -95,6 +101,24 @@ workspaces:
     keep_alive: true
 
 window_rules:
+  # Pin apps to specific workspaces on launch.
+  - commands: ["move --workspace 1"]
+    match:
+      - window_process: { regex: "WindowsTerminal|wezterm-gui|alacritty|kitty" }
+  - commands: ["move --workspace 2"]
+    match:
+      - window_process: { regex: "msedge|chrome|firefox|brave" }
+  - commands: ["move --workspace 3"]
+    match:
+      - window_process: { regex: "Windows365|msrdc|RemoteDesktop" }
+      - window_process: { equals: "claude" }
+  - commands: ["move --workspace 4"]
+    match:
+      - window_process: { equals: "Spotify" }
+  - commands: ["move --workspace 5"]
+    match:
+      - window_process: { equals: "Code" }
+
   - commands: ["ignore"]
     match:
       - window_process: { equals: "Calendar" }
@@ -154,29 +178,28 @@ keybindings:
   - commands: ["move --workspace 4", "focus --workspace 4"]
     bindings: ["alt+shift+l"]
 
-  # Additional workspaces with number keys
+  # Workspace switching: rshift as meta + numpad + control+N + control+navcluster
+  # Nav cluster layout mirrors numpad 1-6 (two rows of three):
+  #   ctrl+page_up(1)  ctrl+up(2)    ctrl+page_down(3)
+  #   ctrl+left(4)     ctrl+down(5)  ctrl+right(6)
+  - commands: ["focus --workspace 1", "focus --workspace 1"]
+    bindings: ["rshift+1", "numpad1", "control+1", "control+page_up"]
+  - commands: ["focus --workspace 2", "focus --workspace 2"]
+    bindings: ["rshift+2", "numpad2", "control+2", "control+up"]
+  - commands: ["focus --workspace 3", "focus --workspace 3"]
+    bindings: ["rshift+3", "numpad3", "control+3", "control+page_down"]
+  - commands: ["focus --workspace 4", "focus --workspace 4"]
+    bindings: ["rshift+4", "numpad4", "control+4", "control+left"]
   - commands: ["focus --workspace 5", "focus --workspace 5"]
-    bindings: ["alt+5"]
+    bindings: ["rshift+5", "numpad5", "control+5", "control+down"]
   - commands: ["focus --workspace 6", "focus --workspace 6"]
-    bindings: ["alt+6"]
+    bindings: ["rshift+6", "numpad6", "control+6", "control+right"]
   - commands: ["focus --workspace 7", "focus --workspace 7"]
-    bindings: ["alt+7"]
+    bindings: ["rshift+7", "numpad7", "control+7"]
   - commands: ["focus --workspace 8", "focus --workspace 8"]
-    bindings: ["alt+8"]
+    bindings: ["rshift+8", "numpad8", "control+8"]
   - commands: ["focus --workspace 9", "focus --workspace 9"]
-    bindings: ["alt+9"]
-
-  # Move windows to additional workspaces
-  - commands: ["move --workspace 5", "focus --workspace 5"]
-    bindings: ["alt+shift+5"]
-  - commands: ["move --workspace 6", "focus --workspace 6"]
-    bindings: ["alt+shift+6"]
-  - commands: ["move --workspace 7", "focus --workspace 7"]
-    bindings: ["alt+shift+7"]
-  - commands: ["move --workspace 8", "focus --workspace 8"]
-    bindings: ["alt+shift+8"]
-  - commands: ["move --workspace 9", "focus --workspace 9"]
-    bindings: ["alt+shift+9"]
+    bindings: ["rshift+9", "numpad9", "control+9"]
 
   # # Move the focused window's parent workspace to a monitor in a given
   # # direction.
