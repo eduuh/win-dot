@@ -101,15 +101,14 @@ Test-Case 'psmux lazygit popup binding (prefix g)' {
     "$match"
 }
 
-Test-Case 'psmux picker bindings: T, C-s, C-w' {
+Test-Case 'psmux workflow popup bindings: C-o (tat), o (worktree picker)' {
+    # C-s/C-w/T pickers were retired in favour of the tmux-workflow popups.
     $keys = & psmux list-keys 2>&1
-    $t = $keys | Where-Object { $_ -match '^bind-key -T prefix T\s' }
-    $cs = $keys | Where-Object { $_ -match '^bind-key -T prefix C-s\s' }
-    $cw = $keys | Where-Object { $_ -match '^bind-key -T prefix C-w\s' }
-    if (-not $t) { throw 'missing T binding' }
-    if (-not $cs) { throw 'missing C-s binding' }
-    if (-not $cw) { throw 'missing C-w binding' }
-    "T+C-s+C-w bound"
+    $co = $keys | Where-Object { $_ -match '^bind-key -T prefix C-o\s.*display-popup' }
+    $o  = $keys | Where-Object { $_ -match '^bind-key -T prefix o\s.*display-popup' }
+    if (-not $co) { throw 'missing C-o tat popup binding' }
+    if (-not $o)  { throw 'missing o worktree popup binding' }
+    'C-o + o popups bound'
 }
 
 Test-Case 'psmux can split + create multiple panes' {
@@ -151,8 +150,10 @@ Test-Case 'Terminal profile commandline can be invoked end-to-end' {
 # 4. Windows Terminal settings.json
 # ---------------------------------------------------------------------------
 $settings = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
-$tmuxGuid = '{c0ffee01-d2c0-4e8a-b1a7-7373731ad510}'
-$wslGuid  = '{4ff56d04-d9cf-57ea-bae2-ad396374e7e3}'
+# c0ffee01... is the 'notes' profile (formerly 'powershell-tmux'); it kept its guid
+# across the rename. ubuntu-wsl is now the deliberate default profile.
+$notesGuid = '{c0ffee01-d2c0-4e8a-b1a7-7373731ad510}'
+$wslGuid   = '{4ff56d04-d9cf-57ea-bae2-ad396374e7e3}'
 
 Test-Case 'Windows Terminal settings.json exists and is valid JSON' {
     if (-not (Test-Path $settings)) { throw "settings.json missing" }
@@ -161,28 +162,29 @@ Test-Case 'Windows Terminal settings.json exists and is valid JSON' {
     "{0} profiles, default={1}" -f $obj.profiles.list.Count, $obj.defaultProfile
 }
 
-Test-Case 'Default profile is powershell-tmux' {
+Test-Case 'Default profile is ubuntu-wsl' {
     $obj = Get-Content $settings -Raw | ConvertFrom-Json
-    if ($obj.defaultProfile -ne $tmuxGuid) { throw "defaultProfile is $($obj.defaultProfile)" }
+    if ($obj.defaultProfile -ne $wslGuid) { throw "defaultProfile is $($obj.defaultProfile)" }
     $obj.defaultProfile
 }
 
-Test-Case 'Exactly 2 profiles are visible (powershell-tmux + ubuntu-wsl)' {
+Test-Case 'Exactly 2 profiles are visible (notes + ubuntu-wsl)' {
     $obj = Get-Content $settings -Raw | ConvertFrom-Json
     $visible = $obj.profiles.list | Where-Object { -not $_.hidden }
     $names = ($visible | ForEach-Object { $_.name }) -join ', '
     if ($visible.Count -ne 2) { throw "expected 2, got $($visible.Count): $names" }
-    if ($names -notmatch 'powershell-tmux') { throw "missing powershell-tmux: $names" }
+    if ($names -notmatch 'notes') { throw "missing notes: $names" }
     if ($names -notmatch 'ubuntu-wsl') { throw "missing ubuntu-wsl: $names" }
     $names
 }
 
-Test-Case 'powershell-tmux uses absolute pwsh path' {
+Test-Case 'notes profile launches helix (hx .)' {
     $obj = Get-Content $settings -Raw | ConvertFrom-Json
-    $p = $obj.profiles.list | Where-Object { $_.guid -eq $tmuxGuid }
-    if ($p.commandline -notmatch 'C:\\Program Files\\PowerShell') { throw "no abs pwsh path: $($p.commandline)" }
-    if ($p.commandline -notmatch 'psmux new-session -A -s main') { throw "no psmux command: $($p.commandline)" }
-    'commandline OK'
+    $p = $obj.profiles.list | Where-Object { $_.guid -eq $notesGuid }
+    if (-not $p) { throw "notes profile ($notesGuid) not found" }
+    if ($p.name -ne 'notes') { throw "guid $notesGuid is named '$($p.name)', expected 'notes'" }
+    if ($p.commandline -notmatch '\bhx\b') { throw "notes commandline does not launch hx: $($p.commandline)" }
+    "commandline: $($p.commandline)"
 }
 
 # ---------------------------------------------------------------------------
@@ -199,8 +201,8 @@ Test-Case 'PowerShell profile defines d2w function' {
 Test-Case 'd2w runs end-to-end (creates watch server, serves SVG)' {
     # Load the profile into a child pwsh, run d2w in the background, hit the server
     $abs = 'C:\Program Files\PowerShell\7-preview\pwsh.exe'
-    $exampleD2 = "$HOME\projects\personal-notes\d2\examples\hello.d2"
-    if (-not (Test-Path $exampleD2)) { throw "missing example d2 file" }
+    $exampleD2 = "$HOME\projects\win-dot\examples\hello.d2"
+    if (-not (Test-Path $exampleD2)) { throw "missing example d2 fixture at $exampleD2" }
     $job = Start-Job -ScriptBlock {
         param($abs, $profilePath, $exampleD2)
         & $abs -NoLogo -NoProfile -Command ". '$profilePath'; d2w '$exampleD2' -Port 8123" *>&1

@@ -9,3 +9,6 @@
 $null
 *.bak
 *.swp
+
+# d2w renders this next to the verify-suite fixture on every run
+examples/*.svg

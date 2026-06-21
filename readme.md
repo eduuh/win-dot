@@ -1,6 +1,6 @@
 # win-dot
 
-Windows dotfiles, bare-repo style. A fresh machine becomes Windows Terminal → `psmux` → Helix on branch-notes + `btop`, plus pwsh 7 with starship and a `dot` command for the dotfiles themselves.
+Windows dotfiles, bare-repo style. A fresh machine becomes Windows Terminal with two tabs — `ubuntu-wsl` (the default, dropping into a WSL `psmux` session) and `notes` (a pwsh 7 tab that opens straight into Helix on `~`) — plus starship and a `dot` command for the dotfiles themselves.
 
 ## Bootstrap
 
@@ -36,7 +36,7 @@ Both are gitignored. Use them for work identities, tenant IDs, anything you don'
 | `d2w [file]` | live-preview a [D2](https://d2lang.com) diagram in the browser; opens the file in `$EDITOR` |
 | `go <sub>` | fzf launcher: `fav` (Edge bookmarks) · `folder` (cd into `~/projects/*`) · `explorer` (same, in File Explorer) · `app` (Start-Menu apps, classic + UWP) · `cs` (GitHub Codespaces). `go` alone prints help. |
 | `htop` / `top` | aliases for `btop` |
-| `pwsh -NoProfile -File $HOME\scripts\verify-environment.ps1` | run the 25-check smoke suite |
+| `pwsh -NoProfile -File $HOME\scripts\verify-environment.ps1` | run the 27-check smoke suite |
 
 ## Layout
 
@@ -44,10 +44,11 @@ Both are gitignored. Use them for work identities, tenant IDs, anything you don'
 .config/powershell/profile.ps1    # canonical pwsh profile (THE source of truth)
 .config/tmux/start-main.ps1       # psmux session launcher (notes / personal / htop)
 .config/wt/install-shortcuts.ps1  # creates Desktop + Start Menu "Terminal" shortcut
-                                  # (Windows Terminal w/ powershell-tmux + ubuntu-wsl tabs)
+                                  # (Windows Terminal w/ notes + ubuntu-wsl tabs)
 .gitconfig                         # global git; [include]s ~/.gitconfig.local
 .tmux.conf                         # psmux config (WSL parity)
-AppData/.../settings.json          # Windows Terminal: powershell-tmux + ubuntu-wsl
+AppData/.../settings.json          # Windows Terminal: notes (opens Helix) + ubuntu-wsl; default = ubuntu-wsl
+examples/hello.d2                  # tiny D2 fixture used by the verify suite's d2w smoke test
 scripts/                           # run.ps1, win.ps1, gh.ps1, install-packages.ps1, …
 docs/architecture.md               # the why
 ```
