@@ -2,6 +2,21 @@
 
 Windows dotfiles, bare-repo style. A fresh machine becomes Windows Terminal with two tabs — `ubuntu-wsl` (the default, dropping into a WSL `psmux` session) and `notes` (a pwsh 7 tab that opens straight into Helix on `~`) — plus starship and a `dot` command for the dotfiles themselves.
 
+## Prerequisites
+
+On a fresh machine you need git before you can clone. Install it via [Scoop](https://scoop.sh):
+
+```powershell
+# Allow scripts to run (current user only)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Install Scoop
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+
+# Install git
+scoop install git
+```
+
 ## Bootstrap
 
 ```powershell
