@@ -26,10 +26,10 @@ git clone --bare https://github.com/eduuh/win-dot.git $HOME\projects\win-dot-bar
 # 2. Define dot, lay files into $HOME
 function dot { git --git-dir="$HOME\projects\win-dot-bare" --work-tree="$HOME" @args }
 dot config status.showUntrackedFiles no
-dot checkout    # back up any conflicting files in $HOME if it errors, then retry
+dot checkout --force   # --force overwrites pre-existing files (e.g. settings.json)
 
 # 3. Install everything (admin)
-$HOME\scripts\run.ps1
+& "$HOME\scripts\run.ps1"
 ```
 
 That's it. `run.ps1` orchestrates `win.ps1` → `gh.ps1` → `install.ps1` and ends by writing a PowerShell profile stub at the host's real `$PROFILE` (see [docs/architecture.md](docs/architecture.md)).
