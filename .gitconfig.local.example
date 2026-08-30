@@ -1,0 +1,21 @@
+# Local, untracked git config — included from ~/.gitconfig
+#
+# Copy this file to ~/.gitconfig.local and edit the values to match
+# the current machine. It is gitignored so private identities, Azure
+# tenant IDs, and credential helpers stay out of the public repo.
+
+# Default credential helper on Windows: Git Credential Manager (ships
+# with Git for Windows). Replace if you use something else.
+[credential]
+	helper = manager
+
+# Per-host credential overrides. Add as many [credential "..."] blocks
+# as you need for the registries / hosts you authenticate against.
+[credential "https://dev.azure.com"]
+	useHttpPath = true
+
+# Example: per-org Azure DevOps with explicit tenant authority.
+# Uncomment and fill in your username + tenant GUID.
+#[credential "azrepos:org/<your-org>"]
+#	username = <you>@<tenant>.com
+#	azureAuthority = https://login.microsoftonline.com/<tenant-guid>

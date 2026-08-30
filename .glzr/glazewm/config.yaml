@@ -1,0 +1,257 @@
+general:
+  config_reload_commands: []
+
+  startup_commands:
+    - "shell-exec wt"
+    - "shell-exec C:\\PROGRA~2\\MICROS~1\\Edge\\APPLIC~1\\msedge.exe"
+    - "shell-exec code"
+    - "shell-exec explorer.exe shell:AppsFolder\\MicrosoftCorporationII.Windows365_8wekyb3d8bbwe!Windows365"
+    - "shell-exec explorer.exe shell:AppsFolder\\SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify"
+    - "focus --workspace 1"
+
+  shutdown_commands: []
+
+  focus_follows_cursor: true
+
+  toggle_workspace_on_refocus: false
+
+  cursor_jump:
+    enabled: true
+    trigger: "window_focus"
+
+  hide_method: "cloak"
+
+  show_all_in_taskbar: false
+
+gaps:
+  scale_with_dpi: true
+
+  inner_gap: "2px"
+
+  outer_gap:
+    top: "2px"
+    right: "2px"
+    bottom: "2px"
+    left: "2px"
+
+window_effects:
+  focused_window:
+    border:
+      enabled: true
+      color: "#8dbcff"
+
+    hide_title_bar:
+      enabled: false
+
+    corner_style:
+      enabled: true
+      style: "rounded"
+
+    transparency:
+      enabled: false
+    opacity: "100%"
+
+  other_windows:
+    border:
+      enabled: true
+      color: "#a1a1a1"
+    hide_title_bar:
+      enabled: false
+    corner_style:
+      enabled: false
+      style: "square"
+    transparency:
+      enabled: false
+      opacity: "0%"
+
+window_behavior:
+  initial_state: "tiling"
+
+  state_defaults:
+    floating:
+      centered: true
+
+      shown_on_top: true
+
+    fullscreen:
+      maximized: false
+
+      shown_on_top: true
+
+workspaces:
+  # No `bind_to_monitor`: GlazeWM auto-distributes these across whatever
+  # monitors are connected (1, 2, or 3), in the order listed below.
+  - name: "1"
+    display_name: "remote"
+    keep_alive: true
+  - name: "2"
+    keep_alive: true
+  - name: "3"
+    keep_alive: true
+  - name: "4"
+    keep_alive: true
+  - name: "5"
+    keep_alive: true
+  - name: "6"
+    keep_alive: true
+  - name: "7"
+    keep_alive: true
+  - name: "8"
+    keep_alive: true
+  - name: "9"
+    keep_alive: true
+
+window_rules:
+  # Pin apps to specific workspaces on launch.
+  - commands: ["move --workspace 1"]
+    match:
+      - window_process: { regex: "WindowsTerminal|wezterm-gui|alacritty|kitty" }
+  - commands: ["move --workspace 2"]
+    match:
+      - window_process: { regex: "msedge|chrome|firefox|brave" }
+  - commands: ["move --workspace 3"]
+    match:
+      - window_process: { regex: "Windows365|msrdc|RemoteDesktop" }
+      - window_process: { equals: "claude" }
+  - commands: ["move --workspace 7"]
+    match:
+      - window_process: { equals: "Spotify" }
+  - commands: ["move --workspace 5"]
+    match:
+      - window_process: { equals: "Code" }
+  - commands: ["move --workspace 8"]
+    match:
+      - window_process: { regex: "ms-teams|Teams" }
+
+  - commands: ["ignore"]
+    match:
+      - window_process: { equals: "Calendar" }
+      - window_process: { equals: "People" }
+      - window_process: { equals: "Files" }
+      - window_process: { equals: "SnippingTool" }
+      - window_process: { equals: "ScreenClippingHost" }
+      - window_process: { equals: "ScreenToGif" }
+      # - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+      #   window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
+      # - window_process: { equals: 'PowerToys' }
+      #   window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
+      # - window_process: { equals: 'PowerToys' }
+      #   window_title: { regex: '.*? - Peek' }
+      # - window_process: { equals: 'Lively' }
+      #   window_class: { regex: 'HwndWrapper' }
+      # - window_process: { equals: 'EXCEL' }
+      #   window_class: { not_regex: 'XLMAIN' }
+      # - window_process: { equals: 'WINWORD' }
+      #   window_class: { not_regex: 'OpusApp' }
+      # - window_process: { equals: 'POWERPNT' }
+      #   window_class: { not_regex: 'PPTFrameClass' }
+
+binding_modes:
+  - name: "layout"
+    keybindings:
+      # Size presets — each auto-exits the mode after firing
+      # Physical keys: K=narrow, L=equal, ;=increase (right home row)
+      - commands: ["resize --width 30%", "wm-disable-binding-mode --name layout"]
+        bindings: ["n"]
+      - commands: ["resize --width 50%", "wm-disable-binding-mode --name layout"]
+        bindings: ["e"]
+      - commands: ["resize --width 70%", "wm-disable-binding-mode --name layout"]
+        bindings: ["i"]
+      # Toggle tiling direction (horizontal ↔ vertical) — physical F
+      - commands: ["toggle-tiling-direction", "wm-disable-binding-mode --name layout"]
+        bindings: ["t"]
+      # Exit without action
+      - commands: ["wm-disable-binding-mode --name layout"]
+        bindings: ["escape", "space"]
+
+keybindings:
+  - commands: ['focus --direction left']
+    bindings: ['alt+a' ]
+  - commands: ['focus --direction right']
+    bindings: ['alt+t']
+  - commands: ["toggle-fullscreen"]
+    bindings: ["alt+f"]
+  - commands: ["toggle-minimized"]
+    bindings: ["alt+m"]
+  - commands: ["close"]
+    bindings: ["alt+q"]
+
+  - commands: ['wm-toggle-pause']
+    bindings: ['alt+d']
+
+  # Layout palette — enter with Win+Space, then one key to act and auto-exit
+  - commands: ["wm-enable-binding-mode --name layout"]
+    bindings: ["alt+space"]
+
+
+  # Change focus to a workspace defined in `workspaces` config.
+  - commands: ["focus --workspace 1", "focus --workspace 1"]
+    bindings: ["alt+n"]
+  - commands: ["focus --workspace 2", "focus --workspace 2"]
+    bindings: ["alt+e"]
+  - commands: ["focus --workspace 3", "focus --workspace 3"]
+    bindings: ["alt+i"]
+  - commands: ["focus --workspace 4", "focus --workspace 4"]
+    bindings: ["alt+l"]
+
+  - commands: ["move --workspace 1", "focus --workspace 1"]
+    bindings: ["alt+shift+n"]
+  - commands: ["move --workspace 2", "focus --workspace 2"]
+    bindings: ["alt+shift+e"]
+  - commands: ["move --workspace 3", "focus --workspace 3"]
+    bindings: ["alt+shift+i"]
+  - commands: ["move --workspace 4", "focus --workspace 4"]
+    bindings: ["alt+shift+l"]
+
+  # Move focused window to a workspace and follow it.
+  - commands: ["move --workspace 1", "focus --workspace 1"]
+    bindings: ["lshift+1"]
+  - commands: ["move --workspace 2", "focus --workspace 2"]
+    bindings: ["lshift+2"]
+  - commands: ["move --workspace 3", "focus --workspace 3"]
+    bindings: ["lshift+3"]
+  - commands: ["move --workspace 4", "focus --workspace 4"]
+    bindings: ["lshift+4"]
+  - commands: ["move --workspace 5", "focus --workspace 5"]
+    bindings: ["lshift+5"]
+  - commands: ["move --workspace 6", "focus --workspace 6"]
+    bindings: ["lshift+6"]
+  - commands: ["move --workspace 7", "focus --workspace 7"]
+    bindings: ["lshift+7"]
+  - commands: ["move --workspace 8", "focus --workspace 8"]
+    bindings: ["lshift+8"]
+  - commands: ["move --workspace 9", "focus --workspace 9"]
+    bindings: ["lshift+9"]
+
+  # Workspace switching: rshift as meta + numpad + control+N + control+navcluster
+  # numpad1-9 are the WORKSPACE switchers here. The Keyflow numpad layer must
+  # therefore emit MAIN-ROW digits (1-9), NOT numpad keycodes, for typing —
+  # otherwise GlazeWM swallows them before the focused app sees them.
+  # Nav cluster layout mirrors numpad 1-6 (two rows of three):
+  #   ctrl+page_up(1)  ctrl+up(2)    ctrl+page_down(3)
+  #   ctrl+left(4)     ctrl+down(5)  ctrl+right(6)
+  - commands: ["focus --workspace 1", "focus --workspace 1"]
+    bindings: ["rshift+1", "numpad1", "control+1", "control+page_up"]
+  - commands: ["focus --workspace 2", "focus --workspace 2"]
+    bindings: ["rshift+2", "numpad2", "control+2", "control+up"]
+  - commands: ["focus --workspace 3", "focus --workspace 3"]
+    bindings: ["rshift+3", "numpad3", "control+3", "control+page_down"]
+  - commands: ["focus --workspace 4", "focus --workspace 4"]
+    bindings: ["rshift+4", "numpad4", "control+4", "control+left"]
+  - commands: ["focus --workspace 5", "focus --workspace 5"]
+    bindings: ["rshift+5", "numpad5", "control+5", "control+down"]
+  - commands: ["focus --workspace 6", "focus --workspace 6"]
+    bindings: ["rshift+6", "numpad6", "control+6", "control+right"]
+  - commands: ["focus --workspace 7", "focus --workspace 7"]
+    bindings: ["rshift+7", "numpad7", "control+7"]
+  - commands: ["focus --workspace 8", "focus --workspace 8"]
+    bindings: ["rshift+8", "numpad8", "control+8"]
+  - commands: ["focus --workspace 9", "focus --workspace 9"]
+    bindings: ["rshift+9", "numpad9", "control+9"]
+
+  # Move the focused workspace to the other monitor.
+  - commands: ['move-workspace --direction left']
+    bindings: ['alt+shift+a']
+  - commands: ['move-workspace --direction right']
+    bindings: ['alt+shift+t']
+ 

@@ -1,0 +1,22 @@
+# Local, untracked PowerShell profile overrides.
+#
+# Copy this file to ~/.config/powershell/profile.local.ps1 and edit it
+# to match the current machine. It is gitignored, so identities and
+# work-only helpers stay out of the public repo.
+#
+# It's sourced from the tail of the tracked profile, so anything you
+# define here is available in every fresh pwsh.
+
+# Example: per-repo identity switchers. These set git config WITHOUT
+# --global so you opt in on a repo-by-repo basis, never accidentally
+# stamping the wrong identity on commits elsewhere.
+
+function github {
+    git config user.name  '<your-github-handle>'
+    git config user.email '<your-noreply>@users.noreply.github.com'
+}
+
+function rgithub {
+    git config user.name  '<your-work-name>'
+    git config user.email '<you>@<your-org>.com'
+}

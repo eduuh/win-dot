@@ -1,0 +1,14 @@
+# Private / per-machine overrides — never commit.
+.gitconfig.local
+.config/powershell/profile.local.ps1
+
+# Tool scratch directories
+.claude/
+
+# OS / editor cruft
+$null
+*.bak
+*.swp
+
+# d2w renders this next to the verify-suite fixture on every run
+examples/*.svg

@@ -1,0 +1,3 @@
+[submodule ".bin/tmux-workflow"]
+	path = .bin/tmux-workflow
+	url = https://github.com/eduuh/tmux-workflow.git

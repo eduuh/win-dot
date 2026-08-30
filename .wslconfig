@@ -1,0 +1,7 @@
+[wsl2]
+memory=48GB
+processors=16
+networkingMode=mirrored
+dnsTunneling=true
+autoProxy=true
+firewall=true
