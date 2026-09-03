@@ -1,6 +1,16 @@
 [wsl2]
-memory=48GB
-processors=16
+# Only settings that actually deviate from the WSL2 default belong here.
+#
+# processors is deliberately absent: the default is already every logical
+# processor on the host. The line used to read processors=16 on a 12-CPU
+# machine — WSL clamps an over-large value silently, so the file claimed to
+# configure something it never did.
+#
+# memory defaults to 50% of host RAM (31GB of 63.6GB here). 55GB leaves ~8GB
+# for Windows. WSL allocates up to this cap dynamically rather than reserving
+# it, so the cost is not idle overhead — it is that a runaway build can squeeze
+# Windows down to that ~8GB before WSL stops growing.
+memory=55GB
 networkingMode=mirrored
 dnsTunneling=true
 autoProxy=true
