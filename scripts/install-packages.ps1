@@ -142,7 +142,7 @@ catch {
 Write-Status "Installing Scoop packages..."
 $scoopPackages = @(
     "extras/obsidian","main/neovim",
-    "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship"
+    "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship", "uv"
 )
 $scoopFailed = @()
 foreach ($tool in $scoopPackages) {
