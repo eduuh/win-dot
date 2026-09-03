@@ -4,29 +4,36 @@ Why win-dot is shaped the way it is.
 
 ---
 
-## Bare-repo dotfiles
+## One clone, $HOME as the work tree
 
-Dotfiles live in a **bare** git repo at `~/projects/win-dot-bare`, with the *work tree* pointing at `$HOME`. That means every tracked file lands at the exact path it's used (`~/.tmux.conf`, `~/.config/powershell/profile.ps1`, etc.) without symlinks, copy steps, or template engines.
+Dotfiles live in the ordinary clone at `~/projects/win-dot`. The `dot` command points *that clone's git dir* at a second work tree, `$HOME`, so every tracked file lands at the exact path it's used (`~/.tmux.conf`, `~/.config/powershell/profile.ps1`, etc.) without symlinks, copy steps, or template engines.
 
 A `dot` shell function does
 
 ```powershell
-git --git-dir="$HOME/projects/win-dot-bare" --work-tree="$HOME" @args
+git -c status.showUntrackedFiles=no --git-dir="$HOME/projects/win-dot/.git" --work-tree="$HOME" @args
 ```
 
-so it behaves like `git` but operates on the bare repo. `dot status`, `dot add ~/.config/...`, `dot commit`, `dot push` — same muscle memory.
+so it behaves like `git` but stages and commits against `$HOME`. `dot status`, `dot add ~/.config/...`, `dot commit`, `dot push` — same muscle memory. `showUntrackedFiles=no` is passed per-invocation rather than written to the repo config, so plain `git status` inside `~/projects/win-dot` still lists untracked files normally.
 
-A plain clone at `~/projects/win-dot` exists alongside the bare repo for browsing, editing scripts, and running tools that expect a normal `.git/` directory. The two are independent clones; both push to `origin`.
+Plain `git` in `~/projects/win-dot` keeps working for browsing, editing scripts, and tools that expect a normal `.git/` directory. It is the same git dir and the same history — one remote, one `pull`.
 
-### Why bare?
+Earlier versions of this repo kept a separate bare clone at `~/projects/win-dot-bare` for the same job. If you set the machine up before that change, nothing reads it any more — check it has nothing unpushed, then delete it.
+
+### Why one clone?
 
 | Alternative | Trade-off |
 |---|---|
 | Symlinks from a single dotfiles dir | Breaks when target paths are inside read-only or virtualised locations (e.g. OneDrive-redirected `Documents/`). Doubles the file count in your home dir. |
 | Stow / chezmoi / yadm | Adds a runtime dependency; templating creates a second source of truth. |
-| **Bare repo (this approach)** | Zero dependencies beyond git. The repo *is* the home dir layout. |
+| Separate bare repo at `~/projects/win-dot-bare` | Two independent clones of one remote, each with its own fetch state. Easy to commit in one and wonder why the other is behind. |
+| **One clone, `--work-tree=$HOME` (this approach)** | Zero dependencies beyond git. The repo *is* the home dir layout, and there's a single place to pull. |
 
 The pattern is the same on the WSL side (see `~/projects/dotfiles`).
+
+### The shared-index caveat
+
+Both views share `.git/index` but resolve paths against different work trees, so they agree only while `~/projects/win-dot` and `$HOME` hold the same content for every tracked file. Edit `~/.tmux.conf` directly and `git status` in the repo reports it as a change *away* from the checked-out copy. Keep the two in step — edit in the repo then `dot checkout --force`, or edit under `$HOME` and `dot commit` before touching the repo copy.
 
 ---
 
@@ -93,7 +100,7 @@ So you can drop identity-switcher functions, work-only aliases, or secrets-loadi
 
 ### What protects you
 
-`~/projects/win-dot/.gitignore` (also visible to the bare repo via `dot`):
+`~/projects/win-dot/.gitignore` (the same file `dot` reads, since it's the same git dir):
 
 ```
 .gitconfig.local

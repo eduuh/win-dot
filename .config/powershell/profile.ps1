@@ -7,7 +7,7 @@ function dot {
         [Parameter(ValueFromRemainingArguments = $true)]
         [string[]]$Args
     )
-    git --git-dir="$HOME/projects/win-dot-bare" --work-tree="$HOME" @Args
+    git -c status.showUntrackedFiles=no --git-dir="$HOME/projects/win-dot/.git" --work-tree="$HOME" @Args
 }
 
 # Legacy alias for `dot` from the previous profile

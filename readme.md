@@ -25,6 +25,19 @@ In dotfiles that routing comes from naming the repo in **both**
 clone, the second redirects that clone to the Windows filesystem. Either list on
 its own silently puts it inside WSL, where Windows tooling cannot reach it.
 
+This clone is also the git dir behind the `dot` command — there is no second,
+bare copy of the repo. `dot` is plain git with that git dir and `$HOME` as the
+work tree:
+
+```powershell
+git --git-dir="$HOME/projects/win-dot/.git" --work-tree="$HOME" <args>
+```
+
+So `dot status`, `dot add ~/.config/...`, `dot commit` and `dot push` all act on
+the same history you see with plain `git` inside the repo. See
+[`docs/architecture.md`](docs/architecture.md) for why, and for the one caveat
+of sharing an index between two work trees.
+
 ## `.wslconfig`
 
 `.wslconfig` in this repo is the source of truth for the WSL VM's resources, but
@@ -64,7 +77,7 @@ git clone https://github.com/eduuh/win-dot.git $HOME\projects\win-dot
 # 5. Install packages in this non-Administrator window
 & "$HOME\projects\win-dot\scripts\install.ps1"
 
-# 6. Set up the dot command
+# 6. Set up the dot command — checks this clone out over $HOME
 & "$HOME\projects\win-dot\scripts\setup-git.ps1"
 ```
 
