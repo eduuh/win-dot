@@ -142,7 +142,9 @@ catch {
 Write-Status "Installing Scoop packages..."
 $scoopPackages = @(
     "extras/obsidian","main/neovim",
-    "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship", "uv"
+    # No "uv": scoop's uv package ships uvw.exe, which work endpoint policy blocks.
+    # Use uv inside WSL instead, where nothing blocks it.
+    "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship"
 )
 $scoopFailed = @()
 foreach ($tool in $scoopPackages) {
