@@ -239,15 +239,6 @@ catch {
     Write-Host "Warning: Failed to install PSMUX: $_" -ForegroundColor Yellow
 }
 
-# Setup Neovim configuration
-Write-Host "Setting up Neovim configuration..."
-$nvimSetupScript = Join-Path $PSScriptRoot "setup-nvim-config.ps1"
-if (Test-Path $nvimSetupScript) {
-    & $nvimSetupScript
-} else {
-    Write-Host "Warning: setup-nvim-config.ps1 not found" -ForegroundColor Yellow
-}
-
 # Azure CLI Extensions
 Write-Host "Installing Azure CLI extensions..."
 if (Get-Command az -ErrorAction SilentlyContinue) {
