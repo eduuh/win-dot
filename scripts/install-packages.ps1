@@ -111,7 +111,7 @@ function Install-WingetPackage($package) {
         }
 
         Write-Status "Installing $package..."
-        winget install --id $package --source winget --accept-source-agreements --accept-package-agreements --silent
+        winget install --id $package --source winget --accept-source-agreements --accept-package-agreements --silent --disable-interactivity
         if ($LASTEXITCODE -eq 0) {
             Write-Status "Installed $package" "Green"
             return $true
@@ -142,7 +142,9 @@ catch {
 Write-Status "Installing Scoop packages..."
 $scoopPackages = @(
     "extras/obsidian","main/neovim",
-    "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship", "uv"
+    # No "uv": scoop's uv package ships uvw.exe, which work endpoint policy blocks.
+    # Use uv inside WSL instead, where nothing blocks it.
+    "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship"
 )
 $scoopFailed = @()
 foreach ($tool in $scoopPackages) {
@@ -168,9 +170,11 @@ $wingetPackages = @(
     "aristocratos.btop4win"
 )
 
+$wingetFailed = @()
 foreach ($pkg in $wingetPackages) {
-    winget install --id $pkg --source winget --accept-source-agreements --accept-package-agreements
-    Write-Host "Installed $pkg."
+    if (-not (Install-WingetPackage $pkg)) {
+        $wingetFailed += $pkg
+    }
 }
 
 # Microsoft.PowerShell.Preview's installer ships a buggy PATH entry
@@ -187,21 +191,20 @@ if (Test-Path (Join-Path $pwshDir 'pwsh.exe')) {
     }
 }
 
-winget install GlazeWM --source winget --accept-source-agreements --accept-package-agreements
-
 # Azure Authentication CLI
 Write-Host "Installing Azure Authentication CLI..."
 $env:AZUREAUTH_VERSION = '0.9.2'
 $script = "${env:TEMP}\install.ps1"
 $url = "https://raw.githubusercontent.com/AzureAD/microsoft-authentication-cli/${env:AZUREAUTH_VERSION}/install/install.ps1"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Invoke-WebRequest $url -OutFile $script
-if ($?) {
+try {
+    Invoke-WebRequest $url -OutFile $script
     & $script
-    Write-Host "Installed Azure Authentication CLI."
+    Remove-Item $script -ErrorAction SilentlyContinue
+    Write-Host "Installed Azure Authentication CLI." -ForegroundColor Green
 }
-if ($?) {
-    Remove-Item $script
+catch {
+    Write-Host "Warning: could not install Azure Authentication CLI: $_" -ForegroundColor Yellow
 }
 
 # PSMUX - tmux-compatible terminal multiplexer for Windows
