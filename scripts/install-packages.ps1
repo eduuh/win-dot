@@ -144,7 +144,10 @@ $scoopPackages = @(
     "extras/obsidian","main/neovim",
     # No "uv": scoop's uv package ships uvw.exe, which work endpoint policy blocks.
     # Use uv inside WSL instead, where nothing blocks it.
-    "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship"
+    "7zip", "gh", "fzf", "ripgrep", "make", "cmake", "bat", "starship",
+    # win32yank: WSL copy and paste reach the Windows clipboard through it (bn's bn-clip, used by
+    # tmux and nvim). The fallback, clip.exe plus PowerShell, takes 0.8s a paste; win32yank 0.1s.
+    "win32yank"
 )
 $scoopFailed = @()
 foreach ($tool in $scoopPackages) {
