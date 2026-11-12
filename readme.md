@@ -3,6 +3,18 @@
 Windows-side configuration: PowerShell profile, Windows Terminal, GlazeWM,
 VS Code, keyboard, and the `.wslconfig` that sizes the WSL VM.
 
+I keep the Windows half of my development setup here, separate from the Linux
+configs in WSL. PowerShell scripts install packages through Scoop and winget,
+and profile stubs load one tracked PowerShell profile across hosts.
+
+The `dot` command uses this clone's Git directory with `$HOME` as its work tree.
+No separate bare clone. [Architecture](docs/architecture.md) covers the
+shared-index caveat and the gitignored files for private overrides.
+
+Start with [Installation](#installation). This is a personal Windows setup,
+not a portable installer: it checks tracked files out over `$HOME`, and the
+Windows feature setup needs Administrator approval. Keep the clone on Windows.
+
 ## Where this repo lives
 
 It has to sit on the **Windows filesystem** — everything here is read by Windows
